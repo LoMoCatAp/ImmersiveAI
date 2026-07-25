@@ -1,0 +1,2 @@
+# Define project-specific obfuscation rules here.
+# Release obfuscation is disabled in entry/build-profile.json5.

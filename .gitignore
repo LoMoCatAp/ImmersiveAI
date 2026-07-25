@@ -1,0 +1,10 @@
+.cache/
+.hvigor/
+.idea/
+build/
+entry/build/
+*.hap
+*.app
+*.har
+*.hsp
+.DS_Store

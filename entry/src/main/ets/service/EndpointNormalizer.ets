@@ -1,0 +1,2 @@
+export interface EndpointResult { valid: boolean; normalized: string; message: string }
+export class EndpointNormalizer { static normalize(input: string): EndpointResult { const value: string = input.trim(); if (value.length === 0) return { valid: false, normalized: '', message: 'Enter a service endpoint.' }; if (!value.startsWith('http://') && !value.startsWith('https://')) return { valid: false, normalized: value, message: 'Endpoint must include http:// or https://.' }; return { valid: true, normalized: value.endsWith('/') ? value.slice(0, -1) : value, message: '' }; } }

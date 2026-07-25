@@ -1,0 +1,40 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "AIBox"
+    },
+    {
+      "name": "module_desc",
+      "value": "AIBox 智能聊天应用"
+    },
+    {
+      "name": "internet_reason",
+      "value": "连接用户填写的供应商地址"
+    },
+    {
+      "name": "first_use_notice",
+      "value": "密钥由用户提供，请求将发送到所选第三方服务。"
+    },
+    {
+      "name": "empty_history",
+      "value": "暂无会话"
+    },
+    {
+      "name": "provider_required",
+      "value": "请填写所有必填供应商信息"
+    },
+    {
+      "name": "network_error",
+      "value": "请求未完成，请检查地址或网络。"
+    },
+    {
+      "name": "delete_confirm",
+      "value": "确定删除此供应商吗？本地信息和受保护密钥都会被删除。"
+    },
+    {
+      "name": "import_fallback",
+      "value": "文件选择能力尚未验证，请直接粘贴 JSON。"
+    }
+  ]
+}

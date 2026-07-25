@@ -1,0 +1,40 @@
+{
+  "color": [
+    {
+      "name": "app_background",
+      "value": "#F7F8FC"
+    },
+    {
+      "name": "surface",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "primary",
+      "value": "#3559D8"
+    },
+    {
+      "name": "text_primary",
+      "value": "#172033"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#667085"
+    },
+    {
+      "name": "danger",
+      "value": "#C62828"
+    },
+    {
+      "name": "selection_surface",
+      "value": "#E8F0FE"
+    },
+    {
+      "name": "chat_assistant_bubble",
+      "value": "#E4EAF2"
+    },
+    {
+      "name": "chat_user_bubble",
+      "value": "#D2E0FC"
+    }
+  ]
+}
