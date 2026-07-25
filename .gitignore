@@ -17,6 +17,7 @@ outputs/
 *.hsp
 
 # Local signing material and machine-specific configuration
+build-profile.json5
 *.cer
 *.jks
 *.keystore
