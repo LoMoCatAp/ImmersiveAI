@@ -59,6 +59,7 @@ export struct ChatView {
     AppStore.chatViewModel.setStateObserver((): void => {
       this.syncChatState();
     });
+    this.restoreMoreSettings();
     this.syncChatState();
     AppStorage.setOrCreate('chat_assistant_name', AppStore.readAppearance('assistant_name', '助手'));
     void this.refreshProviders();
@@ -334,11 +335,28 @@ export struct ChatView {
   }
 
   private saveMoreSettings(): void {
+    const modelName: string = this.modelOverride.trim();
+    const prompt: string = this.systemPrompt.trim();
+    const context: number = Number(this.contextCount);
     const name: string = this.assistantName.trim().length > 0 ? this.assistantName.trim() : '助手';
+    this.modelOverride = modelName;
+    this.systemPrompt = prompt;
+    this.contextCount = Number.isFinite(context) && context >= 0 ? `${Math.floor(context)}` : '16';
     this.assistantName = name;
+    AppStore.saveAppearance('chat_model_override', modelName);
+    AppStore.saveAppearance('chat_system_prompt', prompt);
+    AppStore.saveAppearance('chat_context_count', this.contextCount);
     AppStore.saveAppearance('assistant_name', name);
     AppStorage.setOrCreate('chat_assistant_name', name);
     this.showMore = false;
+  }
+
+  private restoreMoreSettings(): void {
+    this.modelOverride = AppStore.readAppearance('chat_model_override', '');
+    this.systemPrompt = AppStore.readAppearance('chat_system_prompt', '');
+    const context: number = Number(AppStore.readAppearance('chat_context_count', '16'));
+    this.contextCount = Number.isFinite(context) && context >= 0 ? `${Math.floor(context)}` : '16';
+    this.assistantName = AppStore.readAppearance('assistant_name', '助手');
   }
 
   @Builder
