@@ -50,7 +50,7 @@ struct Index {
   private showStartupNotice(): void {
     if (this.startupNoticeShown || this.startupNoticeRevision <= 0) return;
     this.startupNoticeShown = true;
-    if (this.startupShouldShowOnboarding && (this.onboardingFlowStage.length === 0 || this.onboardingFlowStage === 'completed')) {
+    if (this.startupShouldShowOnboarding && this.onboardingFlowStage.length === 0) {
       this.showOnboarding = true;
       return;
     }
@@ -61,8 +61,7 @@ struct Index {
 
   private beginProviderSetup(): void {
     this.showOnboarding = false;
-    AppStorage.setOrCreate('onboarding_flow_stage', 'provider_setup');
-    AppStorage.set('onboarding_flow_stage', 'provider_setup');
+    AppStore.saveOnboardingStage('provider_setup');
     const revision: number = Date.now();
     AppStorage.setOrCreate('onboarding_provider_setup_revision', revision);
     AppStorage.set('onboarding_provider_setup_revision', revision);

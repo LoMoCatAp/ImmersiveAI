@@ -40,6 +40,22 @@ export class AppStore {
     AppStore.materialPreferences?.putSync(key, value);
     AppStore.materialPreferences?.flushSync();
   }
+  static readOnboardingStage(): string {
+    return AppStore.readAppearance('onboarding_flow_stage', '');
+  }
+  static saveOnboardingStage(stage: string): void {
+    AppStore.saveAppearance('onboarding_flow_stage', stage);
+    AppStorage.setOrCreate('onboarding_flow_stage', stage);
+    AppStorage.set('onboarding_flow_stage', stage);
+  }
+  static readOnboardingProviderId(): string {
+    return AppStore.readAppearance('onboarding_provider_id', '');
+  }
+  static saveOnboardingProviderId(providerId: string): void {
+    AppStore.saveAppearance('onboarding_provider_id', providerId);
+    AppStorage.setOrCreate('onboarding_provider_id', providerId);
+    AppStorage.set('onboarding_provider_id', providerId);
+  }
   static async publishStartupNotice(): Promise<void> {
     const info = await FirstLaunchDetector.detect();
     const installIdentity: string = `${info.firstInstallTime}`;
@@ -47,12 +63,18 @@ export class AppStore {
     const previousInstall: string = AppStore.readAppearance('startup_install_identity', '');
     const previousVersion: string = AppStore.readAppearance('startup_version_identity', '');
     const completedOnboardingInstall: string = AppStore.readAppearance('onboarding_completed_install_identity', '');
+    const onboardingStage: string = AppStore.readOnboardingStage();
     const isFirstInstall: boolean = previousInstall.length === 0 || (installIdentity !== '0' && previousInstall !== installIdentity);
     const isFirstRunOfVersion: boolean = previousVersion !== versionIdentity;
     const shouldShowOnboarding: boolean = completedOnboardingInstall !== installIdentity;
+    const hasResumableOnboarding: boolean = onboardingStage === 'provider_setup' || onboardingStage === 'provider_test' || onboardingStage === 'chat';
     AppStore.saveAppearance('startup_install_identity', installIdentity);
     AppStore.saveAppearance('startup_version_identity', versionIdentity);
-    if (!isFirstInstall && !isFirstRunOfVersion && !shouldShowOnboarding) return;
+    AppStorage.setOrCreate('onboarding_flow_stage', onboardingStage);
+    AppStorage.set('onboarding_flow_stage', onboardingStage);
+    AppStorage.setOrCreate('onboarding_provider_id', AppStore.readOnboardingProviderId());
+    AppStorage.set('onboarding_provider_id', AppStore.readOnboardingProviderId());
+    if (!isFirstInstall && !isFirstRunOfVersion && (!shouldShowOnboarding || hasResumableOnboarding)) return;
     AppStorage.setOrCreate('startup_is_first_install', isFirstInstall);
     AppStorage.set('startup_is_first_install', isFirstInstall);
     AppStorage.setOrCreate('startup_version_name', info.versionName);
@@ -68,6 +90,7 @@ export class AppStore {
     if (installIdentity.length > 0) AppStore.saveAppearance('onboarding_completed_install_identity', installIdentity);
     AppStorage.setOrCreate('startup_should_show_onboarding', false);
     AppStorage.set('startup_should_show_onboarding', false);
+    AppStore.saveOnboardingStage('completed');
   }
   static async initialize(context: common.UIAbilityContext): Promise<void> {
     if (AppStore.initialized || AppStore.initializing) return;

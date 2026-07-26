@@ -39,7 +39,7 @@ export struct ProviderSettingsView {
     this.importText = '';
     this.editingDraft = { displayName: 'DeepSeek', providerKind: ProviderKind.DeepSeek, protocolStyle: ProtocolStyle.OpenAI, endpoint: 'https://api.deepseek.com', modelName: 'deepseek-v4-flash', credential: '' };
   }
-  private setOnboardingStage(stage: string): void { AppStorage.setOrCreate('onboarding_flow_stage', stage); AppStorage.set('onboarding_flow_stage', stage); }
+  private setOnboardingStage(stage: string): void { AppStore.saveOnboardingStage(stage); }
   private onboardingProvider(): ProviderRecord | undefined { return this.providers.find((item: ProviderRecord): boolean => item.id === this.onboardingProviderId); }
   private async save(draft: ProviderDraft, id: string): Promise<void> {
     const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft;
@@ -56,8 +56,7 @@ export struct ProviderSettingsView {
     if (this.onboardingFlowStage === 'provider_setup') {
       const savedProvider: ProviderRecord | undefined = this.providers.find((item: ProviderRecord): boolean => item.displayName === value.displayName.trim() && item.endpoint === value.endpoint.trim() && item.modelName === value.modelName.trim());
       if (savedProvider !== undefined) {
-        AppStorage.setOrCreate('onboarding_provider_id', savedProvider.id);
-        AppStorage.set('onboarding_provider_id', savedProvider.id);
+        AppStore.saveOnboardingProviderId(savedProvider.id);
         this.setOnboardingStage('provider_test');
       }
     }

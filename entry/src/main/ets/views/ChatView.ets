@@ -275,8 +275,6 @@ export struct ChatView {
     const assistant: MessageRecord | undefined = AppStore.chatViewModel.messages.slice().reverse().find((item: MessageRecord): boolean => item.role === 'assistant');
     if (this.onboardingFlowStage === 'chat' && assistant !== undefined && assistant.status === MessageStatus.Completed) {
       AppStore.completeOnboarding();
-      AppStorage.setOrCreate('onboarding_flow_stage', 'completed');
-      AppStorage.set('onboarding_flow_stage', 'completed');
       this.showToast('首次引导已完成，可以继续自由对话。');
     }
     if (attachment.length > 0 && AppStore.chatViewModel.messages.length > messageCount) {
