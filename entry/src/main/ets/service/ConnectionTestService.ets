@@ -17,6 +17,7 @@ export class ConnectionTestService {
   }
 
   private testBody(provider: ProviderRecord): string {
+    if (provider.protocolStyle === 'openaiResponses') return `{"model":${JSON.stringify(provider.modelName)},"input":"ping","max_output_tokens":1}`;
     if (provider.protocolStyle === 'claudeStyle') {
       return `{"model":${JSON.stringify(provider.modelName)},"max_tokens":1,"messages":[{"role":"user","content":"ping"}]}`;
     }

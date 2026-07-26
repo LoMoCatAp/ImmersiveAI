@@ -1,5 +1,5 @@
 import { MessageRecord, MessageStatus, ConversationRecord } from '../model/ChatModels';
-import { ChatMessage, StreamDelta, ProtocolAdapter } from '../model/ProtocolModels';
+import { ChatMessage, StreamDelta, ProtocolAdapter, StreamRequestOptions } from '../model/ProtocolModels';
 import { ProviderRecord } from '../model/ProviderModels';
 import { ChatRepository } from '../data/ChatRepository';
 import { StreamingChatService } from '../service/StreamingChatService';
@@ -115,7 +115,7 @@ export class ChatViewModel {
     return compact.length > 24 ? `${compact.slice(0, 24)}…` : compact || '新会话';
   }
 
-  async send(provider: ProviderRecord, conversationId: string, credential: string, adapter: ProtocolAdapter, text: string, systemPrompt: string = '', contextCount: number = 0): Promise<void> {
+  async send(provider: ProviderRecord, conversationId: string, credential: string, adapter: ProtocolAdapter, text: string, systemPrompt: string = '', contextCount: number = 0, enableWebSearch: boolean = false): Promise<void> {
     if (this.isGenerating || text.trim().length === 0 || !provider.enabled || conversationId.length === 0) return;
     if (this.currentConversationId !== conversationId) await this.load(conversationId);
 
@@ -164,7 +164,8 @@ export class ChatViewModel {
     const requestMessages: ChatMessage[] = systemPrompt.trim().length > 0 ? [systemMessage].concat(contextual) : contextual;
 
     try {
-      await this.service.stream(provider, requestMessages, credential, adapter, (delta: StreamDelta): void => {
+      const options: StreamRequestOptions = { enableWebSearch };
+      await this.service.stream(provider, requestMessages, credential, adapter, options, (delta: StreamDelta): void => {
         assistant.content += delta.content;
         assistant.reasoningContent += delta.reasoning;
         this.publishAssistantContent(assistant.id, assistant.content);

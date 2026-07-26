@@ -1,4 +1,4 @@
-import { ChatMessage, ProtocolAdapter, StreamDelta } from '../model/ProtocolModels';
+import { ChatMessage, ProtocolAdapter, StreamDelta, StreamRequestOptions } from '../model/ProtocolModels';
 import { ProtocolStyle } from '../model/ProviderModels';
 import { OpenAIStyleAdapter } from './OpenAIStyleAdapter';
 
@@ -12,7 +12,7 @@ export class DeepSeekStyleAdapter implements ProtocolAdapter {
   style: ProtocolStyle = ProtocolStyle.OpenAI;
   private readonly parser: OpenAIStyleAdapter = new OpenAIStyleAdapter();
 
-  buildBody(messages: ChatMessage[], modelName: string): string {
+  buildBody(messages: ChatMessage[], modelName: string, _options: StreamRequestOptions): string {
     const apiMessages: DeepSeekMessage[] = messages.map((message: ChatMessage): DeepSeekMessage => {
       const result: DeepSeekMessage = { role: message.role, content: message.content };
       if (message.role === 'assistant' && message.reasoningContent.trim().length > 0) {

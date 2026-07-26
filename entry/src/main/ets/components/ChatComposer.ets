@@ -1,17 +1,31 @@
+import { THEME_TOKENS } from '../common/ThemeTokens';
 
 @Component
 export struct ChatComposer {
   @State inputText: string = '';
   @Prop isGenerating: boolean = false;
   @Prop hasAttachment: boolean = false;
+  @Prop webSearchSupported: boolean = false;
+  @Prop webSearchEnabled: boolean = false;
   onSend: (text: string) => void = (_text: string): void => {};
   onStop: () => void = (): void => {};
   onMore: () => void = (): void => {};
   onPickAttachment: () => void = (): void => {};
+  onToggleWebSearch: () => void = (): void => {};
   build() {
     Column({ space: 8 }) {
       Row() {
-        Button('导入文件').onClick(this.onPickAttachment).height(32).fontSize(13).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+        Row({ space: 8 }) {
+          Button('导入文件').onClick(this.onPickAttachment).height(32).fontSize(13).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+          Button('联网搜索')
+            .enabled(this.webSearchSupported)
+            .onClick(this.onToggleWebSearch)
+            .height(32)
+            .fontSize(13)
+            .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
+            .backgroundColor(this.webSearchEnabled ? THEME_TOKENS.primary : THEME_TOKENS.surface)
+            .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+        }
       }.width('100%');
     Row({ space: 8 }) {
        TextInput({ placeholder: '输入消息', text: this.inputText }).layoutWeight(1).onChange((value: string): void => { this.inputText = value; });

@@ -7,6 +7,8 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 import { ClaudeStyleAdapter } from '../service/ClaudeStyleAdapter';
 import { GeminiStyleAdapter } from '../service/GeminiStyleAdapter';
 import { DeepSeekStyleAdapter } from '../service/DeepSeekStyleAdapter';
+import { OpenAIResponsesAdapter } from '../service/OpenAIResponsesAdapter';
+import { ProviderRegistry } from '../service/ProviderRegistry';
 import { EmptyState } from '../components/EmptyState';
 import { NavigationIntent, NavigationSource, ShellTab } from '../model/ShellModels';
 import { MarkdownBlock, MarkdownParser } from '../service/MarkdownParser';
@@ -30,6 +32,7 @@ export struct ChatView {
   @State modelOverride: string = '';
   @State systemPrompt: string = '';
   @State contextCount: string = '16';
+  @State webSearchEnabled: boolean = false;
   @State showMore: boolean = false;
   @State providers: ProviderRecord[] = [];
   @State availableModels: string[] = [];
@@ -199,6 +202,32 @@ export struct ChatView {
     this.modelDiscoveryMessage = AppStore.providerViewModel.modelDiscoveryMessage;
   }
 
+  private selectedProvider(): ProviderRecord | undefined {
+    const selected: ProviderRecord | undefined = this.providers.find((item: ProviderRecord): boolean => item.id === this.selectedProviderId);
+    if (selected === undefined) return undefined;
+    return {
+      id: selected.id, displayName: selected.displayName, providerKind: selected.providerKind, protocolStyle: selected.protocolStyle,
+      endpoint: selected.endpoint, modelName: this.modelOverride.trim().length > 0 ? this.modelOverride.trim() : selected.modelName,
+      credentialAlias: selected.credentialAlias, maskedCredential: selected.maskedCredential, enabled: selected.enabled,
+      validationState: selected.validationState, createdAt: selected.createdAt, updatedAt: selected.updatedAt
+    };
+  }
+
+  private supportsWebSearch(): boolean {
+    const provider: ProviderRecord | undefined = this.selectedProvider();
+    return provider !== undefined && ProviderRegistry.supportsWebSearch(provider);
+  }
+
+  private toggleWebSearch(): void {
+    if (!this.supportsWebSearch()) {
+      this.webSearchEnabled = false;
+      this.showToast('当前模型不支持原生联网搜索');
+      return;
+    }
+    this.webSearchEnabled = !this.webSearchEnabled;
+    AppStore.saveAppearance('chat_web_search_enabled', this.webSearchEnabled ? 'true' : 'false');
+  }
+
   private async send(text: string): Promise<void> {
     await this.refreshProviders();
     const selected: ProviderRecord | undefined = this.providers.find((item: ProviderRecord): boolean => item.id === this.selectedProviderId);
@@ -218,11 +247,11 @@ export struct ChatView {
       return;
     }
     if (this.conversationId.length === 0) this.conversationId = await AppStore.chatViewModel.newConversation(provider);
-    const adapter = provider.providerKind === ProviderKind.DeepSeek ? new DeepSeekStyleAdapter() : provider.protocolStyle === 'claudeStyle' ? new ClaudeStyleAdapter() : provider.protocolStyle === 'geminiStyle' ? new GeminiStyleAdapter() : new OpenAIStyleAdapter();
+    const adapter = provider.protocolStyle === 'openaiResponses' ? new OpenAIResponsesAdapter(provider.providerKind) : provider.providerKind === ProviderKind.DeepSeek ? new DeepSeekStyleAdapter() : provider.protocolStyle === 'claudeStyle' ? new ClaudeStyleAdapter() : provider.protocolStyle === 'geminiStyle' ? new GeminiStyleAdapter() : new OpenAIStyleAdapter();
     const attachment: string = this.attachmentContent.length > 0 ? `\n\n---\n附件：${this.attachmentName}\n\n${this.attachmentContent}` : '';
     const messageCount: number = AppStore.chatViewModel.messages.length;
     const outgoingText: string = `${text}${attachment}`.trim();
-    await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, this.systemPrompt, Number(this.contextCount));
+    await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, this.systemPrompt, Number(this.contextCount), this.webSearchEnabled && this.supportsWebSearch());
     if (attachment.length > 0 && AppStore.chatViewModel.messages.length > messageCount) {
       this.attachmentUri = '';
       this.attachmentName = '';
@@ -357,6 +386,7 @@ export struct ChatView {
     const context: number = Number(AppStore.readAppearance('chat_context_count', '16'));
     this.contextCount = Number.isFinite(context) && context >= 0 ? `${Math.floor(context)}` : '16';
     this.assistantName = AppStore.readAppearance('assistant_name', '助手');
+    this.webSearchEnabled = AppStore.readAppearance('chat_web_search_enabled', 'false') === 'true';
   }
 
   @Builder
@@ -496,7 +526,7 @@ export struct ChatView {
           }
         }.layoutWeight(1).width('100%');
         if (this.errorMessage.length > 0) Text(this.errorMessage).fontColor(THEME_TOKENS.danger);
-        ChatComposer({ isGenerating: this.generating, hasAttachment: this.attachmentContent.length > 0, onSend: (text: string): void => { void this.send(text); }, onStop: (): void => { AppStore.chatViewModel.stop(); }, onMore: (): void => { this.showMore = true; void this.refreshModels(); }, onPickAttachment: (): void => { void this.selectAttachment(); } });
+        ChatComposer({ isGenerating: this.generating, hasAttachment: this.attachmentContent.length > 0, webSearchSupported: this.supportsWebSearch(), webSearchEnabled: this.webSearchEnabled && this.supportsWebSearch(), onSend: (text: string): void => { void this.send(text); }, onStop: (): void => { AppStore.chatViewModel.stop(); }, onMore: (): void => { this.showMore = true; void this.refreshModels(); }, onPickAttachment: (): void => { void this.selectAttachment(); }, onToggleWebSearch: (): void => { this.toggleWebSearch(); } });
       }
     }
     .padding({ left: 20, right: 20, bottom: 72, top: 20 })

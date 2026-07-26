@@ -49,7 +49,7 @@ export class ProviderViewModel {
        const id: string = existingId.length > 0 ? existingId : `provider-${now}-${Math.floor(Math.random() * 1000000)}`;
        const alias: string = `provider_${id}`;
     const old: ProviderRecord | undefined = this.records.find((item: ProviderRecord): boolean => item.id === id);
-     const record: ProviderRecord = { id, displayName: draft.displayName.trim(), providerKind: draft.providerKind, protocolStyle: ProviderRegistry.style(draft.providerKind), endpoint: draft.endpoint.trim(), modelName: draft.modelName.trim(), credentialAlias: old !== undefined ? old.credentialAlias : alias, maskedCredential: old !== undefined ? old.maskedCredential : '••••••', enabled: old !== undefined ? old.enabled : true, validationState: ValidationState.Unknown, createdAt: old !== undefined ? old.createdAt : now, updatedAt: now };
+     const record: ProviderRecord = { id, displayName: draft.displayName.trim(), providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint.trim(), modelName: draft.modelName.trim(), credentialAlias: old !== undefined ? old.credentialAlias : alias, maskedCredential: old !== undefined ? old.maskedCredential : '••••••', enabled: old !== undefined ? old.enabled : true, validationState: ValidationState.Unknown, createdAt: old !== undefined ? old.createdAt : now, updatedAt: now };
     if (old === undefined) await this.credentials.add(record.credentialAlias, draft.credential); else if (draft.credential !== 'unchanged') await this.credentials.update(record.credentialAlias, draft.credential);
       await this.repository.save(record);
       await this.load();

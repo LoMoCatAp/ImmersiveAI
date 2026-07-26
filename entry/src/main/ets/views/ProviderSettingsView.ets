@@ -1,7 +1,7 @@
 import { ProviderEditor } from '../components/ProviderEditor';
 import { ProviderCard } from '../components/ProviderCard';
 import { ImportPreview } from '../components/ImportPreview';
-import { ProviderRecord, ProviderDraft, ProviderKind } from '../model/ProviderModels';
+import { ProtocolStyle, ProviderRecord, ProviderDraft, ProviderKind } from '../model/ProviderModels';
 import { AppStore } from '../common/AppStore';
 import { THEME_TOKENS } from '../common/ThemeTokens';
 import { ImportService } from '../service/ImportService';
@@ -28,7 +28,7 @@ export struct ProviderSettingsView {
     AppStore.providerViewModel.resetTransientState();
   }
   private async refresh(): Promise<void> { await AppStore.providerViewModel.load(); this.providers = AppStore.providerViewModel.records; }
-  private async save(draft: ProviderDraft, id: string): Promise<void> { const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft; await AppStore.providerViewModel.save(value, id); AppStore.refreshShell(); this.editingId = ''; this.editingDraft = undefined; await this.refresh(); }
+  private async save(draft: ProviderDraft, id: string): Promise<void> { const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft; await AppStore.providerViewModel.save(value, id); AppStore.refreshShell(); this.editingId = ''; this.editingDraft = undefined; await this.refresh(); }
   private async toggle(provider: ProviderRecord): Promise<void> { await AppStore.providerViewModel.toggle(provider); AppStore.refreshShell(); await this.refresh(); }
   private remove(provider: ProviderRecord): void {
     AlertDialog.show({
@@ -50,13 +50,13 @@ export struct ProviderSettingsView {
     const delay: number = elapsed >= 800 ? 0 : 800 - elapsed;
     setTimeout((): void => { promptAction.showToast({ message: resultMessage }); }, delay);
   }
-  private beginEdit(provider: ProviderRecord): void { this.editingId = provider.id; this.editingDraft = { displayName: provider.displayName, providerKind: provider.providerKind, endpoint: provider.endpoint, modelName: provider.modelName, credential: '' }; }
+  private beginEdit(provider: ProviderRecord): void { this.editingId = provider.id; this.editingDraft = { displayName: provider.displayName, providerKind: provider.providerKind, protocolStyle: provider.protocolStyle, endpoint: provider.endpoint, modelName: provider.modelName, credential: '' }; }
   private previewImport(): void { AppStore.providerViewModel.beginImport(ImportService.preview(this.importText)); }
   build() {
       Column({ space: 12 }) {
        Text('密钥使用受保护存储，仅以遮罩形式显示。').fontColor(THEME_TOKENS.secondaryText);
        if (this.editingId.length > 0 || this.editingDraft !== undefined) ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
-       else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI', providerKind: ProviderKind.OpenAI, endpoint: 'https://api.openai.com/v1/chat/completions', modelName: 'gpt-5.6', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+       else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
        Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
        if (AppStore.providerViewModel.preview !== undefined) ImportPreview({ preview: AppStore.providerViewModel.preview, onConfirm: (): void => { void AppStore.providerViewModel.confirmImport(); }, onCancel: (): void => { AppStore.providerViewModel.cancelImport(); }, onClear: (): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); } });
