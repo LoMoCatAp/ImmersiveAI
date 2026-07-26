@@ -18,6 +18,7 @@ export struct ProviderEditor {
   @State private protocol: ProtocolStyle = ProtocolStyle.OpenAI;
   @Prop existingId: string = '';
   @Prop initialDraft: ProviderDraft | undefined = undefined;
+  @Prop showOnboardingGuide: boolean = false;
   onSave: (draft: ProviderDraft, id: string) => void = (_draft: ProviderDraft, _id: string): void => {};
   onCancel: () => void = (): void => {};
 
@@ -38,6 +39,14 @@ export struct ProviderEditor {
   private canSelectProtocol(): boolean { return this.kind === ProviderKind.OpenAICompatible || this.kind === ProviderKind.OpenAI || this.kind === ProviderKind.Qwen || this.kind === ProviderKind.XAI; }
   private applyPreset(kind: ProviderKind): void { const preset = ProviderPresets.get(kind); this.kind = kind; this.protocol = ProviderRegistry.style(kind); this.name = preset.displayName; this.model = preset.models.length > 0 ? preset.models[0] : ''; this.endpoint = ProviderPresets.endpointFor(kind, this.model); }
   private save(): void { this.onSave({ displayName: this.name, providerKind: this.kind, protocolStyle: this.protocol, endpoint: this.endpoint, modelName: this.model, credential: this.credentialInput }, this.existingId); }
+  private endpointGuide(): string {
+    if (this.kind === ProviderKind.OpenAICompatible) return '中转站填写服务商提供的根地址，例如 https://api.example.com；可省略 /v1、/chat/completions 等接口路径。';
+    if (this.kind === ProviderKind.DeepSeek) return 'DeepSeek 官方地址：https://api.deepseek.com。无需手动补全 /v1/chat/completions。';
+    if (this.kind === ProviderKind.OpenAI) return 'OpenAI 官方地址：https://api.openai.com。无需手动补全 /v1/chat/completions。';
+    if (this.kind === ProviderKind.Kimi) return 'Kimi 官方地址：https://api.moonshot.cn。无需手动补全接口路径。';
+    if (this.kind === ProviderKind.Qwen) return '通义千问官方地址：https://dashscope.aliyuncs.com。无需手动补全接口路径。';
+    return '选择官方模板会自动填入推荐地址；如使用中转站，请改用 OpenAI compatible 并填写服务商提供的根地址。';
+  }
 
   build() {
     Column({ space: 10 }) {
@@ -50,6 +59,12 @@ export struct ProviderEditor {
         }
         TextInput({ placeholder: '供应商名称', text: this.name }).onChange((value: string): void => { this.name = value; });
         TextInput({ placeholder: '服务地址，例如 https://api.example.com（可省略 /v1 和接口路径）', text: this.endpoint }).onChange((value: string): void => { this.endpoint = value; });
+        if (this.showOnboardingGuide) {
+          Column({ space: 4 }) {
+            Text('地址填写提示').fontSize(14).fontWeight(FontWeight.Medium);
+            Text(this.endpointGuide()).fontSize(13).lineHeight(20).fontColor(THEME_TOKENS.secondaryText).width('100%');
+          }.width('100%').padding(12).backgroundColor(THEME_TOKENS.surface).borderRadius(12).alignItems(HorizontalAlign.Start);
+        }
         TextInput({ placeholder: '模型名称，例如 gpt-4o-mini 或自定义模型 ID', text: this.model }).onChange((value: string): void => { this.model = value; });
         Text('模型将在聊天页的“更多”中获取和选择。').fontSize(13).fontColor(THEME_TOKENS.secondaryText);
         TextInput({ placeholder: '密钥（更新时可留空）', text: this.credentialInput }).type(InputType.Password).onChange((value: string): void => { this.credentialInput = value; });

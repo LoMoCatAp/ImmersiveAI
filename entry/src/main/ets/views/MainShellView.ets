@@ -22,6 +22,9 @@ export struct MainShellView {
   private historyScroller: Scroller = new Scroller();
   private providerScroller: Scroller = new Scroller();
   @StorageLink('provider_edit_revision') @Watch('onProviderEditRequested') private providerEditRevision: number = 0;
+  @StorageLink('onboarding_provider_setup_revision') @Watch('onOnboardingProviderSetupRequested') private onboardingProviderSetupRevision: number = 0;
+  @StorageLink('onboarding_chat_request_revision') @Watch('onOnboardingChatRequested') private onboardingChatRequestRevision: number = 0;
+  @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
   private myScroller: Scroller = new Scroller();
   @State private materialLevel: MaterialLevel = MaterialLevel.Gentle;
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
@@ -45,6 +48,7 @@ export struct MainShellView {
     this.tabsController.bindScroller(1, this.historyScroller);
     this.tabsController.bindScroller(2, this.providerScroller);
     this.tabsController.bindScroller(3, this.myScroller);
+    this.resumeOnboardingFlow();
   }
 
   private navigate(intent: NavigationIntent): void {
@@ -80,6 +84,19 @@ export struct MainShellView {
 
   private onProviderEditRequested(): void {
     this.providerScroller.scrollEdge(Edge.Top);
+  }
+
+  private onOnboardingProviderSetupRequested(): void {
+    if (this.onboardingProviderSetupRevision > 0) this.navigate({ target: ShellTab.Providers, source: NavigationSource.System, requestId: Date.now() });
+  }
+
+  private onOnboardingChatRequested(): void {
+    if (this.onboardingChatRequestRevision > 0) this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() });
+  }
+
+  private resumeOnboardingFlow(): void {
+    if (this.onboardingFlowStage === 'provider_setup' || this.onboardingFlowStage === 'provider_test') this.navigate({ target: ShellTab.Providers, source: NavigationSource.System, requestId: Date.now() });
+    else if (this.onboardingFlowStage === 'chat') this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() });
   }
 
   private activeColorMode(): ThemeColorMode {

@@ -55,6 +55,7 @@ export struct ChatView {
   @StorageLink('chat_live_assistant_reasoning') private liveAssistantReasoning: string = '';
   @StorageLink('chat_live_assistant_status') @Watch('onLiveAssistantStatusChanged') private liveAssistantStatus: string = '';
   @StorageLink('chat_assistant_name') private assistantName: string = '助手';
+  @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
   @StorageLink('chat_rendered_assistant_content') private renderedAssistantContent: string = '{}';
   @StorageLink('chat_rendered_assistant_reasoning') private renderedAssistantReasoning: string = '{}';
   private messageScroller: Scroller = new Scroller();
@@ -269,6 +270,13 @@ export struct ChatView {
     const messageCount: number = AppStore.chatViewModel.messages.length;
     const outgoingText: string = `${text}${attachment}`.trim();
     await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, this.systemPrompt, Number(this.contextCount), this.webSearchEnabled && this.supportsWebSearch());
+    const assistant: MessageRecord | undefined = AppStore.chatViewModel.messages.slice().reverse().find((item: MessageRecord): boolean => item.role === 'assistant');
+    if (this.onboardingFlowStage === 'chat' && assistant !== undefined && assistant.status === MessageStatus.Completed) {
+      AppStore.completeOnboarding();
+      AppStorage.setOrCreate('onboarding_flow_stage', 'completed');
+      AppStorage.set('onboarding_flow_stage', 'completed');
+      this.showToast('首次引导已完成，可以继续自由对话。');
+    }
     if (attachment.length > 0 && AppStore.chatViewModel.messages.length > messageCount) {
       this.attachmentUri = '';
       this.attachmentName = '';
@@ -441,6 +449,7 @@ export struct ChatView {
           }).layoutWeight(1);
           Button('+').onClick((): void => { void this.createNewConversation(); }).height(THEME_TOKENS.touchTarget).width(THEME_TOKENS.touchTarget).fontSize(24).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
         }.width('100%');
+        if (this.onboardingFlowStage === 'chat' && this.messages.length === 0) Text('步骤 3/3：服务商已验证。发送一条消息，确认首次对话正常完成。').fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%').padding(12).backgroundColor(THEME_TOKENS.surface).borderRadius(12);
         if (this.messages.length === 0) Text('输入消息即可开始新的会话。').margin({ top: 8 }).fontColor(THEME_TOKENS.secondaryText);
         List({ space: 8, scroller: this.messageScroller }) {
           ForEach(this.messages, (message: MessageRecord) => {

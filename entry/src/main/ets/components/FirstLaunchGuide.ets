@@ -4,7 +4,8 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 export struct FirstLaunchGuide {
   @Prop accentColor: string = '#3559D8';
   @State private step: number = 0;
-  onComplete: () => void = (): void => {};
+  onBeginProviderSetup: () => void = (): void => {};
+  onDefer: () => void = (): void => {};
 
   @Builder
   private progress(): void {
@@ -59,14 +60,23 @@ export struct FirstLaunchGuide {
               .onClick((): void => { this.step -= 1; })
               .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
           }
-          Button(this.step === 2 ? '开始使用' : '下一步')
+          if (this.step === 2) {
+            Button('稍后设置')
+              .layoutWeight(1)
+              .height(THEME_TOKENS.touchTarget)
+              .fontColor(this.accentColor)
+              .backgroundColor(Color.Transparent)
+              .onClick((): void => { this.onDefer(); })
+              .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+          }
+          Button(this.step === 2 ? '去配置服务商' : '下一步')
             .layoutWeight(1)
             .height(THEME_TOKENS.touchTarget)
             .fontColor(Color.White)
             .backgroundColor(this.accentColor)
             .onClick((): void => {
               if (this.step < 2) this.step += 1;
-              else this.onComplete();
+              else this.onBeginProviderSetup();
             })
             .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
         }.width('100%');
