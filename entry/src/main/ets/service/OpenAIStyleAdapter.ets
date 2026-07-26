@@ -14,7 +14,7 @@ export class OpenAIStyleAdapter implements ProtocolAdapter {
       if (message.name !== undefined) item += `,"name":${JSON.stringify(message.name)}`;
       return `${item}}`;
     });
-    let body: string = `{"model":${JSON.stringify(modelName)},"stream":true,"messages":[${serializedMessages.join(',')}]`;
+    let body: string = `{"model":${JSON.stringify(modelName)},"stream":true,"stream_options":{"include_usage":true},"messages":[${serializedMessages.join(',')}]`;
     if (options.enableWebSearch) body += ',"enable_search":true,"search_options":{"search_strategy":"turbo"}';
     return `${body}}`;
   }

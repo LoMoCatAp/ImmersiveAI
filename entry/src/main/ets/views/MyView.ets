@@ -6,7 +6,7 @@ import { SystemBarAppearance } from '../common/SystemBarAppearance';
 import { common } from '@kit.AbilityKit';
 
 interface AppearanceOption { value: string; label: string; }
-interface HeatmapCell { day: number; level: number; count: number; }
+interface HeatmapCell { day: number; level: number; count: number; tokens: number; }
 
 enum MySection { Home = 'home', Settings = 'settings', About = 'about' }
 
@@ -34,9 +34,14 @@ export struct MyView {
   @State private showHeatDetail: boolean = false;
   @State private selectedDayLabel: string = '';
   @State private selectedDayCount: number = 0;
+  @State private selectedDayTokens: number = 0;
   @State private selectedConversationTitles: string[] = [];
-  @State private contentOpacity: number = 1;
+  @State private totalTokens: number = 0;
+  @State private heatDetailOpacity: number = 1;
+  @State private heatDetailOffset: number = 0;
+  @State private heatDetailScale: number = 1;
   @State private contentOffset: number = 0;
+  @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
@@ -64,17 +69,22 @@ export struct MyView {
       counts.set(key, (counts.get(key) ?? 0) + 1);
     });
     const today: number = Math.floor(Date.now() / DAY_MS);
+    const usageByDay: Map<number, number> = await AppStore.historyViewModel.tokenUsageByDay(today - HEATMAP_DAYS + 1);
     const cells: HeatmapCell[] = [];
     let active: number = 0;
+    let tokenTotal: number = 0;
     for (let offset: number = HEATMAP_DAYS - 1; offset >= 0; offset--) {
       const day: number = today - offset;
       const count: number = counts.get(day) ?? 0;
+      const tokens: number = usageByDay.get(day) ?? 0;
       const level: number = count === 0 ? 0 : count === 1 ? 1 : count < 4 ? 2 : count < 8 ? 3 : 4;
       if (level > 0) active++;
-      cells.push({ day, level, count });
+      tokenTotal += tokens;
+      cells.push({ day, level, count, tokens });
     }
     this.heatmap = cells;
     this.activeDays = active;
+    this.totalTokens = tokenTotal;
   }
 
   private heatWeeks(): Array<Array<HeatmapCell>> {
@@ -96,31 +106,55 @@ export struct MyView {
     return `${date.getMonth() + 1}月${date.getDate()}日`;
   }
 
+  private tokenLabel(tokens: number): string {
+    if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`;
+    if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
+    return `${tokens}`;
+  }
+
   private openHeatDetail(cell: HeatmapCell): void {
     const records: ConversationRecord[] = AppStore.historyViewModel.conversations
       .filter((item: ConversationRecord): boolean => Math.floor(item.updatedAt / DAY_MS) === cell.day)
       .sort((left: ConversationRecord, right: ConversationRecord): number => right.updatedAt - left.updatedAt);
     this.selectedDayLabel = this.dayLabel(cell.day);
     this.selectedDayCount = cell.count;
+    this.selectedDayTokens = cell.tokens;
     this.selectedConversationTitles = records.slice(0, 3).map((item: ConversationRecord): string => item.title || '未命名会话');
-    this.showHeatDetail = false;
-    setTimeout((): void => { this.showHeatDetail = true; }, 16);
+    if (!this.showHeatDetail) {
+      this.showHeatDetail = true;
+      this.heatDetailOpacity = 0;
+      this.heatDetailOffset = -10;
+      this.heatDetailScale = 0.96;
+    } else {
+      this.heatDetailOpacity = 0.72;
+      this.heatDetailOffset = -3;
+      this.heatDetailScale = 0.98;
+    }
+    setTimeout((): void => {
+      this.heatDetailOpacity = 1;
+      this.heatDetailOffset = 0;
+      this.heatDetailScale = 1;
+    }, 16);
+  }
+
+  private closeHeatDetail(): void {
+    this.heatDetailOpacity = 0;
+    this.heatDetailOffset = -8;
+    this.heatDetailScale = 0.96;
+    setTimeout((): void => { this.showHeatDetail = false; }, 180);
   }
 
   private navigateTo(next: MySection): void {
     if (this.isNavigating || next === this.section) return;
     this.isNavigating = true;
-    this.contentOpacity = 0;
-    this.contentOffset = next === MySection.Home ? 20 : -20;
+    this.contentAnimationDuration = 0;
+    this.contentOffset = next === MySection.Home ? -28 : 28;
+    this.section = next;
     setTimeout((): void => {
-      this.section = next;
-      this.contentOffset = next === MySection.Home ? -12 : 12;
-      setTimeout((): void => {
-        this.contentOpacity = 1;
-        this.contentOffset = 0;
-        this.isNavigating = false;
-      }, 20);
-    }, 150);
+      this.contentAnimationDuration = 240;
+      this.contentOffset = 0;
+      setTimeout((): void => { this.isNavigating = false; }, 250);
+    }, 16);
   }
 
   private labels(options: AppearanceOption[]): string[] { return options.map((option: AppearanceOption): string => option.label); }
@@ -186,7 +220,7 @@ export struct MyView {
       Row() {
         Column({ space: 4 }) {
           Text('使用热力图').fontSize(17).fontWeight(FontWeight.Medium);
-          Text(`最近 12 周 · ${this.activeDays} 天活跃`).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
+          Text(`最近 12 周 · ${this.activeDays} 天活跃 · ${this.tokenLabel(this.totalTokens)} Token`).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
         }.alignItems(HorizontalAlign.Start).layoutWeight(1);
         Text('本地').fontSize(12).fontColor(THEME_TOKENS.secondaryText).padding({ left: 8, right: 8, top: 4, bottom: 4 }).backgroundColor(THEME_TOKENS.pageBackground).borderRadius(10);
       }.width('100%');
@@ -225,10 +259,11 @@ export struct MyView {
         Text(this.selectedDayLabel).fontSize(16).fontWeight(FontWeight.Medium).layoutWeight(1);
         Button({ type: ButtonType.Circle }) {
           Text('×').fontSize(20).fontColor(THEME_TOKENS.secondaryText);
-        }.width(28).height(28).backgroundColor(Color.Transparent).onClick((): void => { this.showHeatDetail = false; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
+        }.width(28).height(28).backgroundColor(Color.Transparent).onClick((): void => { this.closeHeatDetail(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
       }.width('100%');
       Text(this.selectedDayCount > 0 ? `当天更新了 ${this.selectedDayCount} 个会话` : '当天没有本地会话活动')
         .fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
+      Text(`累计消耗 ${this.tokenLabel(this.selectedDayTokens)} Token`).fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
       if (this.selectedConversationTitles.length > 0) {
         Column({ space: 4 }) {
           Text('最近会话').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
@@ -242,8 +277,9 @@ export struct MyView {
     .padding(16)
     .backgroundColor(THEME_TOKENS.surface)
     .borderRadius(18)
-    .opacity(this.showHeatDetail ? 1 : 0)
-    .translate({ y: this.showHeatDetail ? 0 : -10 })
+    .opacity(this.heatDetailOpacity)
+    .translate({ y: this.heatDetailOffset })
+    .scale({ x: this.heatDetailScale, y: this.heatDetailScale })
     .animation({ duration: 220, curve: Curve.EaseOut });
   }
 
@@ -332,8 +368,7 @@ export struct MyView {
     .width('100%')
     .height('100%')
     .padding({ left: 20, right: 20, top: 28, bottom: 132 })
-    .opacity(this.contentOpacity)
     .translate({ x: this.contentOffset })
-    .animation({ duration: 180, curve: Curve.EaseOut });
+    .animation({ duration: this.contentAnimationDuration, curve: Curve.EaseOut });
   }
 }

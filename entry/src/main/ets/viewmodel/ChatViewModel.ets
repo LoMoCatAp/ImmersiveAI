@@ -125,7 +125,7 @@ export class ChatViewModel {
       id: `${messageId}-user`, conversationId, sequence: this.messages.length, role: 'user', content: text.trim(), reasoningContent: '', status: MessageStatus.Completed, errorSummary: '', createdAt: now, updatedAt: now
     };
     const assistant: MessageRecord = {
-      id: `${messageId}-assistant`, conversationId, sequence: this.messages.length + 1, role: 'assistant', content: '', reasoningContent: '', status: MessageStatus.Generating, errorSummary: '', createdAt: now, updatedAt: now
+      id: `${messageId}-assistant`, conversationId, sequence: this.messages.length + 1, role: 'assistant', content: '', reasoningContent: '', status: MessageStatus.Generating, errorSummary: '', createdAt: now, updatedAt: now, inputTokens: 0, outputTokens: 0, totalTokens: 0
     };
 
     AppStorage.setOrCreate('chat_live_assistant_id', assistant.id);
@@ -168,6 +168,11 @@ export class ChatViewModel {
       await this.service.stream(provider, requestMessages, credential, adapter, options, (delta: StreamDelta): void => {
         assistant.content += delta.content;
         assistant.reasoningContent += delta.reasoning;
+        if (delta.usage !== undefined) {
+          assistant.inputTokens = delta.usage.inputTokens;
+          assistant.outputTokens = delta.usage.outputTokens;
+          assistant.totalTokens = delta.usage.totalTokens;
+        }
         this.publishAssistantContent(assistant.id, assistant.content);
         this.publishAssistantReasoning(assistant.id, assistant.reasoningContent);
         if (delta.content.length > 0 || delta.reasoning.length > 0 || delta.finishReason.length > 0 || delta.error.length > 0) {
