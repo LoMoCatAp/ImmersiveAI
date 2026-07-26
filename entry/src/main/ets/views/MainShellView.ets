@@ -121,7 +121,7 @@ export struct MainShellView {
     .vertical(false)
     .barPosition(BarPosition.End)
     .divider({ mode: DividerMode.NONE })
-    .barFloatingStyle({ barBottomMargin: 20, adaptToHandedness: true, lightColor: this.appearanceAccentColor, systemMaterialEffect: this.materialLevel === MaterialLevel.Off ? undefined : { materialType: hdsMaterial.MaterialType.IMMERSIVE, materialLevel: this.toHdsLevel(this.materialLevel) } })
+    .barFloatingStyle({ barBottomMargin: 4, adaptToHandedness: true, lightColor: this.appearanceAccentColor, systemMaterialEffect: this.materialLevel === MaterialLevel.Off ? undefined : { materialType: hdsMaterial.MaterialType.IMMERSIVE, materialLevel: this.toHdsLevel(this.materialLevel) } })
     .onChange((index: number): void => { this.navigate({ target: index as ShellTab, source: NavigationSource.HdsTabs, requestId: Date.now() }); })
     .width('100%').height('100%');
   }

@@ -15,7 +15,7 @@ export class OpenAIResponsesAdapter implements ProtocolAdapter {
     let body: string = `{"model":${JSON.stringify(modelName)},"stream":true,"input":[${input.join(',')}]`;
     if (instructions.length > 0) body += `,"instructions":${JSON.stringify(instructions.join('\n\n'))}`;
     if (options.enableWebSearch) {
-      if (this.providerKind === ProviderKind.Qwen) body += ',"tools":[{"type":"web_search"},{"type":"web_extractor"},{"type":"code_interpreter"}]';
+      if (this.providerKind === ProviderKind.Qwen) body += ',"tools":[{"type":"web_search"}]';
       else body += ',"tools":[{"type":"web_search_preview"}]';
     }
     return `${body}}`;
