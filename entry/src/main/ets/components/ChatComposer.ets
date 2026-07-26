@@ -17,14 +17,15 @@ export struct ChatComposer {
       Row() {
         Row({ space: 8 }) {
           Button('导入文件').onClick(this.onPickAttachment).height(32).fontSize(13).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
-          Button('联网搜索')
-            .enabled(this.webSearchSupported)
-            .onClick(this.onToggleWebSearch)
-            .height(32)
-            .fontSize(13)
-            .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
-            .backgroundColor(this.webSearchEnabled ? THEME_TOKENS.primary : THEME_TOKENS.surface)
-            .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+          if (this.webSearchSupported) {
+            Button('联网搜索')
+              .onClick(this.onToggleWebSearch)
+              .height(32)
+              .fontSize(13)
+              .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
+              .backgroundColor(this.webSearchEnabled ? THEME_TOKENS.primary : THEME_TOKENS.surface)
+              .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+          }
         }
       }.width('100%');
     Row({ space: 8 }) {

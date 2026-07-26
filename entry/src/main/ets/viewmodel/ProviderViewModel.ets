@@ -39,10 +39,10 @@ export class ProviderViewModel {
   cancelEdit(): void { this.errorMessage = ''; this.feedbackMessage = '已取消编辑'; }
   beginImport(preview: ImportPreview): void { this.preview = preview; this.errorMessage = preview.errors.join(' '); this.feedbackMessage = preview.errors.length === 0 ? PROVIDER_MESSAGES.importReady : '导入预览存在问题，请修改后重试'; }
   cancelImport(): void { this.operation = ProviderOperation.Cancelling; this.preview = undefined; this.errorMessage = ''; this.feedbackMessage = PROVIDER_MESSAGES.importCancelled; this.operation = ProviderOperation.Idle; }
-  async confirmImport(): Promise<void> { if (this.operation !== ProviderOperation.Idle) return; const pending: ImportPreview | undefined = this.preview; if (pending === undefined || pending.errors.length > 0) { this.errorMessage = '导入内容未通过校验'; return; } await this.save(pending.draft); this.cancelImport(); }
-  async save(draft: ProviderDraft, existingId: string = ''): Promise<void> {
-      if (this.operation !== ProviderOperation.Idle) { this.errorMessage = '上一个操作仍在进行，请稍候'; return; }
-      if (draft.displayName.trim().length === 0 || draft.endpoint.trim().length === 0 || draft.modelName.trim().length === 0 || (draft.credential.length === 0 && existingId.length === 0)) { this.errorMessage = '请填写名称、地址、模型和密钥'; this.feedbackMessage = PROVIDER_MESSAGES.saveFailed; return; }
+  async confirmImport(): Promise<void> { if (this.operation !== ProviderOperation.Idle) return; const pending: ImportPreview | undefined = this.preview; if (pending === undefined || pending.errors.length > 0) { this.errorMessage = '导入内容未通过校验'; return; } const saved: boolean = await this.save(pending.draft); if (saved) this.cancelImport(); }
+  async save(draft: ProviderDraft, existingId: string = ''): Promise<boolean> {
+      if (this.operation !== ProviderOperation.Idle) { this.errorMessage = '上一个操作仍在进行，请稍候'; return false; }
+      if (draft.displayName.trim().length === 0 || draft.endpoint.trim().length === 0 || draft.modelName.trim().length === 0 || (draft.credential.length === 0 && existingId.length === 0)) { this.errorMessage = '请填写名称、地址、模型和密钥'; this.feedbackMessage = PROVIDER_MESSAGES.saveFailed; return false; }
      this.operation = ProviderOperation.Saving;
      try {
        const now: number = Date.now();
@@ -55,9 +55,11 @@ export class ProviderViewModel {
       await this.load();
       this.errorMessage = '';
       this.feedbackMessage = PROVIDER_MESSAGES.saved;
+      return true;
      } catch (_) {
        this.errorMessage = PROVIDER_MESSAGES.saveFailed;
        this.feedbackMessage = PROVIDER_MESSAGES.saveFailed;
+       return false;
      } finally {
        this.operation = ProviderOperation.Idle;
      }

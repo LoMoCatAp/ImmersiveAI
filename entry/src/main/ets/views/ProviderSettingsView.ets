@@ -28,7 +28,19 @@ export struct ProviderSettingsView {
     AppStore.providerViewModel.resetTransientState();
   }
   private async refresh(): Promise<void> { await AppStore.providerViewModel.load(); this.providers = AppStore.providerViewModel.records; }
-  private async save(draft: ProviderDraft, id: string): Promise<void> { const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft; await AppStore.providerViewModel.save(value, id); AppStore.refreshShell(); this.editingId = ''; this.editingDraft = undefined; await this.refresh(); }
+  private async save(draft: ProviderDraft, id: string): Promise<void> {
+    const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft;
+    const saved: boolean = await AppStore.providerViewModel.save(value, id);
+    if (!saved) {
+      const message: string = AppStore.providerViewModel.errorMessage.length > 0 ? AppStore.providerViewModel.errorMessage : '请检查服务商信息后重试';
+      promptAction.showToast({ message });
+      return;
+    }
+    AppStore.refreshShell();
+    this.editingId = '';
+    this.editingDraft = undefined;
+    await this.refresh();
+  }
   private async toggle(provider: ProviderRecord): Promise<void> { await AppStore.providerViewModel.toggle(provider); AppStore.refreshShell(); await this.refresh(); }
   private remove(provider: ProviderRecord): void {
     AlertDialog.show({
@@ -50,7 +62,7 @@ export struct ProviderSettingsView {
     const delay: number = elapsed >= 800 ? 0 : 800 - elapsed;
     setTimeout((): void => { promptAction.showToast({ message: resultMessage }); }, delay);
   }
-  private beginEdit(provider: ProviderRecord): void { this.editingId = provider.id; this.editingDraft = { displayName: provider.displayName, providerKind: provider.providerKind, protocolStyle: provider.protocolStyle, endpoint: provider.endpoint, modelName: provider.modelName, credential: '' }; }
+  private beginEdit(provider: ProviderRecord): void { this.editingId = provider.id; this.editingDraft = { displayName: provider.displayName, providerKind: provider.providerKind, protocolStyle: provider.protocolStyle, endpoint: provider.endpoint, modelName: provider.modelName, credential: '' }; AppStorage.setOrCreate('provider_edit_revision', Date.now()); }
   private previewImport(): void { AppStore.providerViewModel.beginImport(ImportService.preview(this.importText)); }
   build() {
       Column({ space: 12 }) {

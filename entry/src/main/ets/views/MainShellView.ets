@@ -21,6 +21,7 @@ export struct MainShellView {
   private chatScroller: Scroller = new Scroller();
   private historyScroller: Scroller = new Scroller();
   private providerScroller: Scroller = new Scroller();
+  @StorageLink('provider_edit_revision') @Watch('onProviderEditRequested') private providerEditRevision: number = 0;
   private myScroller: Scroller = new Scroller();
   @State private materialLevel: MaterialLevel = MaterialLevel.Gentle;
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
@@ -66,6 +67,10 @@ export struct MainShellView {
   private applyAppearance(colorMode: string, accent: string): void {
     AppStorage.setOrCreate('appearance_color_mode', colorMode);
     AppStorage.setOrCreate('appearance_accent_color', accent);
+  }
+
+  private onProviderEditRequested(): void {
+    this.providerScroller.scrollEdge(Edge.Top);
   }
 
   private activeColorMode(): ThemeColorMode {

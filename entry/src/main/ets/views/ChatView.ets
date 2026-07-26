@@ -529,7 +529,7 @@ export struct ChatView {
         ChatComposer({ isGenerating: this.generating, hasAttachment: this.attachmentContent.length > 0, webSearchSupported: this.supportsWebSearch(), webSearchEnabled: this.webSearchEnabled && this.supportsWebSearch(), onSend: (text: string): void => { void this.send(text); }, onStop: (): void => { AppStore.chatViewModel.stop(); }, onMore: (): void => { this.showMore = true; void this.refreshModels(); }, onPickAttachment: (): void => { void this.selectAttachment(); }, onToggleWebSearch: (): void => { this.toggleWebSearch(); } });
       }
     }
-    .padding({ left: 20, right: 20, bottom: 72, top: 20 })
+    .padding({ left: 20, right: 20, bottom: 56, top: 12 })
     .width('100%')
     .height('100%')
     .bindSheet($$this.showMore, this.moreSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, onWillDismiss: (): void => { this.showMore = false; } });

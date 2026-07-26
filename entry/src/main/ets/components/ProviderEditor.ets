@@ -3,8 +3,8 @@ import { ProviderPresets } from '../service/ProviderPresets';
 import { ProviderRegistry } from '../service/ProviderRegistry';
 import { THEME_TOKENS } from '../common/ThemeTokens';
 
-const PROVIDER_KINDS: ProviderKind[] = [ProviderKind.OpenAICompatible, ProviderKind.OpenAI, ProviderKind.Kimi, ProviderKind.Qwen, ProviderKind.DeepSeek, ProviderKind.GLM, ProviderKind.Anthropic, ProviderKind.Gemini, ProviderKind.XAI];
-const PROVIDER_OPTIONS: SelectOption[] = [{ value: 'OpenAI compatible' }, { value: 'OpenAI' }, { value: 'Kimi' }, { value: 'Qwen' }, { value: 'DeepSeek' }, { value: 'ZHIPU AI' }, { value: 'Anthropic Claude' }, { value: 'Google Gemini' }, { value: 'xAI Grok' }];
+const PROVIDER_KINDS: ProviderKind[] = [ProviderKind.OpenAICompatible, ProviderKind.OpenAI, ProviderKind.DeepSeek, ProviderKind.Kimi, ProviderKind.Qwen, ProviderKind.GLM, ProviderKind.Anthropic, ProviderKind.Gemini];
+const PROVIDER_OPTIONS: SelectOption[] = [{ value: 'OpenAI compatible' }, { value: 'OpenAI' }, { value: 'DeepSeek' }, { value: 'Kimi' }, { value: 'Qwen' }, { value: 'ZHIPU AI' }, { value: 'Anthropic Claude' }, { value: 'Google Gemini' }];
 const PROTOCOLS: ProtocolStyle[] = [ProtocolStyle.OpenAI, ProtocolStyle.OpenAIResponses];
 const PROTOCOL_OPTIONS: SelectOption[] = [{ value: 'Chat Completions' }, { value: 'Responses API' }];
 

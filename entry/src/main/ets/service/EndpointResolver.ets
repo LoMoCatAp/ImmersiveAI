@@ -11,6 +11,7 @@ export class EndpointResolver {
     }
     if (provider.protocolStyle === 'openaiResponses') {
       if (endpoint.endsWith('/responses')) return endpoint;
+      if (endpoint.endsWith('/chat/completions')) return `${endpoint.slice(0, -17)}/responses`;
       if (provider.providerKind === ProviderKind.Qwen && endpoint === 'https://dashscope.aliyuncs.com') return `${endpoint}/compatible-mode/v1/responses`;
       return endpoint.endsWith('/v1') ? `${endpoint}/responses` : `${endpoint}/v1/responses`;
     }
