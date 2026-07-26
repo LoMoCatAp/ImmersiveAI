@@ -54,10 +54,9 @@ struct Index {
       this.showOnboarding = true;
       return;
     }
-    const message: string = this.startupIsFirstInstall
-      ? '已检测到首次安装。欢迎使用 AIBox。'
-      : `已更新至 ${this.startupVersionName}，当前设置与本地会话会继续保留。`;
-    void promptAction.showDialog({ title: '欢迎使用 AIBox', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
+    const version: string = this.startupVersionName.length > 0 ? this.startupVersionName : '最新版本';
+    const message: string = `更新版本：${version}\n\n更新内容：\n- 优化首次引导的步骤提示与动效\n- 修正 DeepSeek 引导默认模型\n- 改进服务商配置与首次对话流程`;
+    void promptAction.showDialog({ title: '更新说明', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
   }
 
   private beginProviderSetup(): void {
