@@ -49,6 +49,14 @@ export struct MainShellView {
     this.tabsController.bindScroller(2, this.providerScroller);
     this.tabsController.bindScroller(3, this.myScroller);
     this.resumeOnboardingFlow();
+    this.syncHdsTabAfterInitialBuild();
+  }
+
+  private syncHdsTabAfterInitialBuild(): void {
+    const target: ShellTab = this.selectedTab;
+    setTimeout((): void => {
+      if (this.material === ShellMaterialMode.VerifiedOfficial && this.selectedTab === target) this.tabsController.changeIndex(target);
+    }, 16);
   }
 
   private navigate(intent: NavigationIntent): void {
