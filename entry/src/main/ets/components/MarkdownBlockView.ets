@@ -37,6 +37,50 @@ export struct MarkdownBlockView {
   }
 
   @Builder
+  private inlineListContent(source: string): void {
+    Text() {
+      ForEach(MarkdownParser.parseInline(source), (token: MarkdownInline) => {
+        Span(token.kind === MarkdownInlineKind.Math ? LatexFormatter.format(token.text) : token.text)
+          .fontWeight(token.kind === MarkdownInlineKind.Bold ? FontWeight.Bold : FontWeight.Normal)
+          .fontStyle(token.kind === MarkdownInlineKind.Italic ? FontStyle.Italic : FontStyle.Normal)
+          .fontFamily(token.kind === MarkdownInlineKind.Code || token.kind === MarkdownInlineKind.Math ? 'monospace' : undefined)
+          .fontSize(token.kind === MarkdownInlineKind.Badge || token.kind === MarkdownInlineKind.Footnote ? this.textSize - 3 : this.textSize)
+          .fontColor(token.kind === MarkdownInlineKind.Link ? '#2F75D6' : token.kind === MarkdownInlineKind.Badge || token.kind === MarkdownInlineKind.Footnote ? '#2F75D6' : $r('app.color.text_primary'))
+          .decoration({ type: token.kind === MarkdownInlineKind.Strike ? TextDecorationType.LineThrough : token.kind === MarkdownInlineKind.Link ? TextDecorationType.Underline : TextDecorationType.None })
+          .onClick((): void => { if (token.kind === MarkdownInlineKind.Link) this.openLink(token.url); });
+      }, (token: MarkdownInline, index: number): string => `${index}-${token.kind}`);
+    }
+    .fontSize(this.textSize)
+    .wordBreak(WordBreak.BREAK_ALL)
+    .copyOption(CopyOptions.LocalDevice)
+    .layoutWeight(1)
+    .constraintSize({ maxWidth: '100%' });
+  }
+
+  private listParts(text: string): string[] {
+    const match: RegExpMatchArray | null = text.match(new RegExp('^((?:[-+*])|(?:\\d+\\.))\\s+(.*)$'));
+    return match === null ? ['-', text] : [match[1], match[2]];
+  }
+
+  private listMarker(): string {
+    return this.listParts(this.block.text)[0];
+  }
+
+  private listText(): string {
+    return this.listParts(this.block.text)[1];
+  }
+
+  @Builder
+  private listContent(): void {
+    Row({ space: 6 }) {
+      Text(this.listMarker()).fontSize(this.textSize).fontColor($r('app.color.text_primary'));
+      this.inlineListContent(this.listText());
+    }
+    .width('100%')
+    .padding({ left: this.block.level * 12 });
+  }
+
+  @Builder
   private tableContent(): void {
     Column({ space: 1 }) {
       ForEach(this.block.rows ?? [], (row: string[], rowIndex: number) => {
@@ -70,7 +114,7 @@ export struct MarkdownBlockView {
       } else if (this.block.kind === MarkdownBlockKind.Task) {
         Row({ space: 8 }) {
           Text(this.block.checked ? '[x]' : '[ ]').fontSize(this.textSize).fontColor(this.block.checked ? '#2F75D6' : THEME_TOKENS.secondaryText);
-          Text(this.block.text).fontSize(this.textSize).fontColor($r('app.color.text_primary')).wordBreak(WordBreak.BREAK_ALL).layoutWeight(1).copyOption(CopyOptions.LocalDevice);
+          this.inlineListContent(this.block.text);
         }.width('100%');
       } else if (this.block.kind === MarkdownBlockKind.Code) {
         Text(this.block.text)
@@ -91,11 +135,7 @@ export struct MarkdownBlockView {
           .backgroundColor(THEME_TOKENS.surface);
       } else {
         if (this.block.kind === MarkdownBlockKind.List) {
-          Text(this.block.level > 0 ? `  ${this.block.text}` : this.block.text)
-            .fontSize(this.textSize)
-            .fontColor($r('app.color.text_primary'))
-            .wordBreak(WordBreak.BREAK_ALL)
-            .copyOption(CopyOptions.LocalDevice);
+          this.listContent();
         } else {
           this.inlineContent(this.block.text);
         }

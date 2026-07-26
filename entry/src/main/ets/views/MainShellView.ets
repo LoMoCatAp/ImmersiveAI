@@ -100,6 +100,7 @@ export struct MainShellView {
       .textAlign(TextAlign.Center)
       .fontSize(14)
       .fontColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'))
+      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 })
       .backgroundColor('#00000000');
   }
 
@@ -115,7 +116,7 @@ export struct MainShellView {
     .vertical(false)
     .barPosition(BarPosition.End)
     .divider({ mode: DividerMode.NONE })
-    .barFloatingStyle({ barBottomMargin: 20, adaptToHandedness: true, lightColor: '#00000000', systemMaterialEffect: this.materialLevel === MaterialLevel.Off ? undefined : { materialType: hdsMaterial.MaterialType.IMMERSIVE, materialLevel: this.toHdsLevel(this.materialLevel) } })
+    .barFloatingStyle({ barBottomMargin: 20, adaptToHandedness: true, lightColor: this.appearanceAccentColor, systemMaterialEffect: this.materialLevel === MaterialLevel.Off ? undefined : { materialType: hdsMaterial.MaterialType.IMMERSIVE, materialLevel: this.toHdsLevel(this.materialLevel) } })
     .onChange((index: number): void => { this.navigate({ target: index as ShellTab, source: NavigationSource.HdsTabs, requestId: Date.now() }); })
     .width('100%').height('100%');
   }
