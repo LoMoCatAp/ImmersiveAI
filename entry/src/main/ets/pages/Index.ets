@@ -18,6 +18,7 @@ struct Index {
   @StorageLink('startup_version_name') private startupVersionName: string = '';
   @StorageLink('startup_should_show_onboarding') private startupShouldShowOnboarding: boolean = false;
   @StorageLink('onboarding_request_revision') @Watch('onOnboardingRequested') private onboardingRequestRevision: number = 0;
+  @StorageLink('onboarding_dismiss_request_revision') @Watch('onOnboardingDismissRequested') private onboardingDismissRequestRevision: number = 0;
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
   @StorageLink('shell_selected_tab') private selectedTab: number = ShellTab.Chat;
   @StorageLink('my_section') private mySection: string = 'home';
@@ -49,6 +50,10 @@ struct Index {
 
   private onOnboardingRequested(): void {
     if (this.onboardingRequestRevision > 0) this.showOnboarding = true;
+  }
+
+  private onOnboardingDismissRequested(): void {
+    if (this.onboardingDismissRequestRevision > 0) this.deferOnboarding();
   }
 
   private showStartupNotice(): void {

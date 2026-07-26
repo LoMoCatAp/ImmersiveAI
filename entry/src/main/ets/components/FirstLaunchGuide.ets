@@ -42,6 +42,14 @@ export struct FirstLaunchGuide {
     });
   }
 
+  private dismissGuide(): void {
+    // The root page also observes this request while the overlay is leaving the tree.
+    const revision: number = Date.now();
+    AppStorage.setOrCreate('onboarding_dismiss_request_revision', revision);
+    AppStorage.set('onboarding_dismiss_request_revision', revision);
+    this.onDefer();
+  }
+
   private changeStep(delta: number): void {
     const target: number = this.step + delta;
     if (this.isTransitioning || target < 0 || target > 2) return;
@@ -131,7 +139,7 @@ export struct FirstLaunchGuide {
               .height(40)
               .fontColor(this.accentColor)
               .backgroundColor(Color.Transparent)
-              .onClick((): void => { this.onDefer(); })
+              .onClick((): void => { this.dismissGuide(); })
               .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
           }.width('100%');
         }.width('100%');
