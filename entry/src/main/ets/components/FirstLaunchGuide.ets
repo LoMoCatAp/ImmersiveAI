@@ -6,7 +6,6 @@ export struct FirstLaunchGuide {
   @Prop accentColor: string = '#3559D8';
   @State private step: number = 0;
   @State private contentOffsetX: number = 0;
-  @State private motionDuration: number = 180;
   @State private isTransitioning: boolean = false;
   private transitionRevision: number = 0;
   onBeginProviderSetup: () => void = (): void => {};
@@ -16,9 +15,7 @@ export struct FirstLaunchGuide {
     this.transitionRevision += 1;
     this.isTransitioning = false;
     this.step = AppStore.readOnboardingIntroStep();
-    this.motionDuration = 0;
     this.contentOffsetX = 0;
-    setTimeout((): void => { this.motionDuration = 180; }, 16);
   }
 
   private titleForStep(step: number): string {
@@ -39,6 +36,12 @@ export struct FirstLaunchGuide {
     return '';
   }
 
+  private animateContentTo(offsetX: number): void {
+    animateTo({ duration: 180, curve: Curve.EaseOut }, (): void => {
+      this.contentOffsetX = offsetX;
+    });
+  }
+
   private changeStep(delta: number): void {
     const target: number = this.step + delta;
     if (this.isTransitioning || target < 0 || target > 2) return;
@@ -47,17 +50,14 @@ export struct FirstLaunchGuide {
     const revision: number = this.transitionRevision;
     const forward: boolean = delta > 0;
     AppStore.saveOnboardingIntroStep(target);
-    this.motionDuration = 180;
-    this.contentOffsetX = forward ? -320 : 320;
+    this.animateContentTo(forward ? -320 : 320);
     setTimeout((): void => {
       if (revision !== this.transitionRevision) return;
       this.step = target;
-      this.motionDuration = 0;
       this.contentOffsetX = forward ? 320 : -320;
       setTimeout((): void => {
         if (revision !== this.transitionRevision) return;
-        this.motionDuration = 180;
-        this.contentOffsetX = 0;
+        this.animateContentTo(0);
       }, 16);
     }, 180);
     setTimeout((): void => {
@@ -100,8 +100,7 @@ export struct FirstLaunchGuide {
       }
       .width('100%')
       .height(220)
-      .translate({ x: this.contentOffsetX })
-      .animation({ duration: this.motionDuration, curve: Curve.EaseOut });
+      .translate({ x: this.contentOffsetX });
     }
     .width('100%')
     .height(220)
@@ -166,8 +165,7 @@ export struct FirstLaunchGuide {
       }
       .width('100%')
       .height(96)
-      .translate({ x: this.contentOffsetX })
-      .animation({ duration: this.motionDuration, curve: Curve.EaseOut });
+      .translate({ x: this.contentOffsetX });
     }
     .width('100%')
     .height(96)
