@@ -5,9 +5,8 @@ import { AppStore } from '../common/AppStore';
 export struct FirstLaunchGuide {
   @Prop accentColor: string = '#3559D8';
   @State private step: number = 0;
-  @State private incomingStep: number = -1;
-  @State private currentOffsetX: number = 0;
-  @State private incomingOffsetX: number = 44;
+  @State private contentOffsetX: number = 0;
+  @State private motionDuration: number = 180;
   @State private isTransitioning: boolean = false;
   private transitionRevision: number = 0;
   onBeginProviderSetup: () => void = (): void => {};
@@ -17,9 +16,9 @@ export struct FirstLaunchGuide {
     this.transitionRevision += 1;
     this.isTransitioning = false;
     this.step = AppStore.readOnboardingIntroStep();
-    this.incomingStep = -1;
-    this.currentOffsetX = 44;
-    setTimeout((): void => { this.currentOffsetX = 0; }, 16);
+    this.motionDuration = 0;
+    this.contentOffsetX = 0;
+    setTimeout((): void => { this.motionDuration = 180; }, 16);
   }
 
   private titleForStep(step: number): string {
@@ -47,22 +46,24 @@ export struct FirstLaunchGuide {
     this.transitionRevision += 1;
     const revision: number = this.transitionRevision;
     const forward: boolean = delta > 0;
-    this.incomingStep = target;
-    this.currentOffsetX = 0;
-    this.incomingOffsetX = forward ? 56 : -56;
     AppStore.saveOnboardingIntroStep(target);
-    setTimeout((): void => {
-      if (revision !== this.transitionRevision) return;
-      this.currentOffsetX = forward ? -56 : 56;
-      this.incomingOffsetX = 0;
-    }, 16);
+    this.motionDuration = 180;
+    this.contentOffsetX = forward ? -320 : 320;
     setTimeout((): void => {
       if (revision !== this.transitionRevision) return;
       this.step = target;
-      this.incomingStep = -1;
-      this.currentOffsetX = 0;
+      this.motionDuration = 0;
+      this.contentOffsetX = forward ? 320 : -320;
+      setTimeout((): void => {
+        if (revision !== this.transitionRevision) return;
+        this.motionDuration = 180;
+        this.contentOffsetX = 0;
+      }, 16);
+    }, 180);
+    setTimeout((): void => {
+      if (revision !== this.transitionRevision) return;
       this.isTransitioning = false;
-    }, 196);
+    }, 376);
   }
 
   @Builder
@@ -97,17 +98,10 @@ export struct FirstLaunchGuide {
       Column() {
         this.guideContent(this.step);
       }
-        .width('100%')
-        .translate({ x: this.currentOffsetX })
-        .animation({ duration: 180, curve: Curve.EaseOut });
-      if (this.incomingStep >= 0) {
-        Column() {
-          this.guideContent(this.incomingStep);
-        }
-          .width('100%')
-          .translate({ x: this.incomingOffsetX })
-          .animation({ duration: 180, curve: Curve.EaseOut });
-      }
+      .width('100%')
+      .height(220)
+      .translate({ x: this.contentOffsetX })
+      .animation({ duration: this.motionDuration, curve: Curve.EaseOut });
     }
     .width('100%')
     .height(220)
@@ -170,17 +164,10 @@ export struct FirstLaunchGuide {
       Column() {
         this.actionContent(this.step);
       }
-        .width('100%')
-        .translate({ x: this.currentOffsetX })
-        .animation({ duration: 180, curve: Curve.EaseOut });
-      if (this.incomingStep >= 0) {
-        Column() {
-          this.actionContent(this.incomingStep);
-        }
-          .width('100%')
-          .translate({ x: this.incomingOffsetX })
-          .animation({ duration: 180, curve: Curve.EaseOut });
-      }
+      .width('100%')
+      .height(96)
+      .translate({ x: this.contentOffsetX })
+      .animation({ duration: this.motionDuration, curve: Curve.EaseOut });
     }
     .width('100%')
     .height(96)
