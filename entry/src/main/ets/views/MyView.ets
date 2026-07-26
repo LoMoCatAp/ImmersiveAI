@@ -244,6 +244,7 @@ export struct MyView {
   }
 
   private openOnboarding(): void {
+    AppStore.saveOnboardingIntroStep(0);
     const revision: number = Date.now();
     AppStorage.setOrCreate('onboarding_request_revision', revision);
     AppStorage.set('onboarding_request_revision', revision);
