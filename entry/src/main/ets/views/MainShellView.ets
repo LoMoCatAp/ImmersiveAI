@@ -93,7 +93,7 @@ export struct MainShellView {
   private titleFor(tab: ShellTab): string {
     if (tab === ShellTab.History) return '历史';
     if (tab === ShellTab.Providers) return '供应商';
-    if (tab === ShellTab.My) return '设置';
+    if (tab === ShellTab.My) return '我的';
     return '聊天';
   }
 
@@ -115,7 +115,7 @@ export struct MainShellView {
       TabContent() { ChatView({ onNavigate: (intent: NavigationIntent): void => { this.navigate(intent); } }) }.tabBar(this.tabLabel('聊天', ShellTab.Chat))
       TabContent() { HistoryView({ onOpen: (id: string): void => { void this.openHistory(id); } }) }.tabBar(this.tabLabel('历史', ShellTab.History))
        TabContent() { Scroll(this.providerScroller) { ProviderSettingsView({ onReturnChat: (): void => { this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() }); } }) }.scrollBar(BarState.Off).width('100%').height('100%') }.tabBar(this.tabLabel('供应商', ShellTab.Providers))
-      TabContent() { Scroll(this.myScroller) { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } }) }.scrollBar(BarState.Off).width('100%').height('100%') }.tabBar(this.tabLabel('设置', ShellTab.My))
+      TabContent() { Scroll(this.myScroller) { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } }) }.scrollBar(BarState.Off).width('100%').height('100%') }.tabBar(this.tabLabel('我的', ShellTab.My))
     }
     .barOverlap(true)
     .vertical(false)

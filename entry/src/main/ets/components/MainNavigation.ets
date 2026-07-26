@@ -21,7 +21,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
       this.tabButton('聊天', ShellTab.Chat);
       this.tabButton('历史', ShellTab.History);
       this.tabButton('供应商', ShellTab.Providers);
-      this.tabButton('设置', ShellTab.My);
+      this.tabButton('我的', ShellTab.My);
     }
     .width('100%')
     .padding({ left: 12, right: 12, top: 8, bottom: 8 })
