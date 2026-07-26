@@ -537,7 +537,7 @@ export struct ChatView {
               }.width('100%').justifyContent(FlexAlign.Start);
             }
           }
-        }.layoutWeight(1).width('100%');
+        }.layoutWeight(1).width('100%').edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
         if (this.errorMessage.length > 0) Text(this.errorMessage).fontColor(THEME_TOKENS.danger);
         ChatComposer({ isGenerating: this.generating, hasAttachment: this.attachmentContent.length > 0, webSearchSupported: this.supportsWebSearch(), webSearchEnabled: this.webSearchEnabled && this.supportsWebSearch(), onSend: (text: string): void => { void this.send(text); }, onStop: (): void => { AppStore.chatViewModel.stop(); }, onMore: (): void => { this.showMore = true; void this.refreshModels(); }, onPickAttachment: (): void => { void this.selectAttachment(); }, onToggleWebSearch: (): void => { this.toggleWebSearch(); } });
       }

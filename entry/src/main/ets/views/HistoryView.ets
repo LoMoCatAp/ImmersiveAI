@@ -81,6 +81,7 @@ export struct HistoryView {
       .layoutWeight(1)
       .width('100%')
       .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
     }.padding({ left: 20, right: 20, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%').height('100%');
   }
 }

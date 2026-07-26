@@ -3,6 +3,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 import { MaterialLevel, MaterialOption } from '../model/ShellModels';
 import { ConversationRecord } from '../model/ChatModels';
 import { SystemBarAppearance } from '../common/SystemBarAppearance';
+import { FirstLaunchDetector } from '../common/FirstLaunchDetector';
 import { common } from '@kit.AbilityKit';
 
 interface AppearanceOption { value: string; label: string; }
@@ -28,6 +29,7 @@ export struct MyView {
   @State private colorMode: string = 'system';
   @State private accentColor: string = '#3559D8';
   @State private chatTextSize: number = 16;
+  @State private appVersion: string = '';
   @State private heatmap: HeatmapCell[] = [];
   @State private activeDays: number = 0;
   @State private heatEntered: boolean = false;
@@ -55,6 +57,7 @@ export struct MyView {
       AppStorage.set('my_section', MySection.Home);
     }
     this.loadSettings();
+    void this.loadAppVersion();
     void this.loadHeatmap();
     this.heatEntered = false;
     setTimeout((): void => { this.heatEntered = true; }, 80);
@@ -62,6 +65,14 @@ export struct MyView {
 
   private onHistoryRevisionChanged(): void {
     void this.loadHeatmap();
+  }
+
+  private async loadAppVersion(): Promise<void> {
+    try {
+      this.appVersion = (await FirstLaunchDetector.detect()).versionName;
+    } catch (_) {
+      this.appVersion = '';
+    }
   }
 
   private onBackRequested(): void {
@@ -383,7 +394,7 @@ export struct MyView {
     Column({ space: 16 }) {
       this.pageHeader('关于');
       List({ space: 0 }) {
-        ListItem() { Column({ space: 5 }) { Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold).width('100%'); Text('作者：LomoCat').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); Text('版本：1.0.0').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); }.width('100%').padding(16); }
+        ListItem() { Column({ space: 5 }) { Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold).width('100%'); Text('作者：LomoCat').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); Text(`版本：${this.appVersion.length > 0 ? this.appVersion : '读取中'}`).fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); }.width('100%').padding(16); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() { Row() { Text('GitHub').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('github.com/LoMoCatAp/ImmersiveAI').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openGitHub()); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
