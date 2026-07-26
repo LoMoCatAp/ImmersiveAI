@@ -45,10 +45,15 @@ export struct MyView {
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
+  @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
 
   aboutToAppear(): void {
+    if (this.section === MySection.Home) {
+      AppStorage.setOrCreate('my_section', MySection.Home);
+      AppStorage.set('my_section', MySection.Home);
+    }
     this.loadSettings();
     void this.loadHeatmap();
     this.heatEntered = false;
@@ -57,6 +62,10 @@ export struct MyView {
 
   private onHistoryRevisionChanged(): void {
     void this.loadHeatmap();
+  }
+
+  private onBackRequested(): void {
+    if (this.backRequestRevision > 0 && this.section !== MySection.Home) this.navigateTo(MySection.Home);
   }
 
   private loadSettings(): void {
@@ -170,6 +179,8 @@ export struct MyView {
     this.contentAnimationDuration = 0;
     this.contentOffset = next === MySection.Home ? -28 : 28;
     this.section = next;
+    AppStorage.setOrCreate('my_section', next);
+    AppStorage.set('my_section', next);
     setTimeout((): void => {
       this.contentAnimationDuration = 240;
       this.contentOffset = 0;

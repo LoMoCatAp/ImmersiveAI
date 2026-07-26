@@ -3,6 +3,7 @@ import { THEME_TOKENS, contentWidthFor, pagePaddingFor } from '../common/ThemeTo
 import { AppStore } from '../common/AppStore';
 import { CustomTheme } from '@kit.ArkUI';
 import { promptAction } from '@kit.ArkUI';
+import { ShellTab } from '../model/ShellModels';
 
 @Entry
 @Component
@@ -14,6 +15,8 @@ struct Index {
   @StorageLink('startup_notice_revision') @Watch('onStartupNoticeChanged') private startupNoticeRevision: number = 0;
   @StorageLink('startup_is_first_install') private startupIsFirstInstall: boolean = false;
   @StorageLink('startup_version_name') private startupVersionName: string = '';
+  @StorageLink('shell_selected_tab') private selectedTab: number = ShellTab.Chat;
+  @StorageLink('my_section') private mySection: string = 'home';
   @State private startupNoticeShown: boolean = false;
 
   aboutToAppear(): void {
@@ -21,6 +24,14 @@ struct Index {
     AppStorage.setOrCreate('appearance_accent_color', AppStore.readAppearance('accent_color', '#3559D8'));
     AppStorage.setOrCreate('appearance_page_background', AppStore.readAppearance('page_background', ''));
     this.showStartupNotice();
+  }
+
+  onBackPress(): boolean {
+    if (this.selectedTab !== ShellTab.My || this.mySection === 'home') return false;
+    const revision: number = Date.now();
+    AppStorage.setOrCreate('my_back_request_revision', revision);
+    AppStorage.set('my_back_request_revision', revision);
+    return true;
   }
 
   private onStartupNoticeChanged(): void {
