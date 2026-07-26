@@ -55,7 +55,7 @@ struct Index {
       return;
     }
     const version: string = this.startupVersionName.length > 0 ? this.startupVersionName : '最新版本';
-    const message: string = `更新版本：${version}\n\n更新内容：\n- 优化首次引导的步骤提示与动效\n- 修正 DeepSeek 引导默认模型\n- 改进服务商配置与首次对话流程`;
+    const message: string = `更新版本：${version}\n\n更新内容：\n- 优化首次引导的步骤提示与动效\n- 修正 DeepSeek 引导默认模型\n- 改进服务商配置与首次对话流程\n\n欢迎继续使用 AIBox`;
     void promptAction.showDialog({ title: '更新说明', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
   }
 

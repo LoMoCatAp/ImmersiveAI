@@ -82,11 +82,11 @@ export struct FirstLaunchGuide {
   }
 
   @Builder
-  private guideContent(contentStep: number): void {
+  private guideContent(): void {
       Column({ space: 12 }) {
-        Text(this.titleForStep(contentStep)).fontSize(contentStep === 0 ? 30 : 24).fontWeight(FontWeight.Bold).fontColor(THEME_TOKENS.primaryText).width('100%');
-        Text(this.detailForStep(contentStep)).fontSize(16).lineHeight(24).fontColor(THEME_TOKENS.secondaryText).width('100%');
-        if (this.hintForStep(contentStep).length > 0) Text(this.hintForStep(contentStep)).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
+        Text(this.titleForStep(this.step)).fontSize(this.step === 0 ? 30 : 24).fontWeight(FontWeight.Bold).fontColor(THEME_TOKENS.primaryText).width('100%');
+        Text(this.detailForStep(this.step)).fontSize(16).lineHeight(24).fontColor(THEME_TOKENS.secondaryText).width('100%');
+        if (this.hintForStep(this.step).length > 0) Text(this.hintForStep(this.step)).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
       }
       .alignItems(HorizontalAlign.Start)
       .width('100%');
@@ -96,7 +96,7 @@ export struct FirstLaunchGuide {
   private guideBody(): void {
     Stack({ alignContent: Alignment.TopStart }) {
       Column() {
-        this.guideContent(this.step);
+        this.guideContent();
       }
       .width('100%')
       .height(220)
@@ -108,8 +108,8 @@ export struct FirstLaunchGuide {
   }
 
   @Builder
-  private actionContent(contentStep: number): void {
-      if (contentStep === 2) {
+  private actionContent(): void {
+      if (this.step === 2) {
         Column({ space: 8 }) {
           Button('去配置服务商')
             .width('100%')
@@ -137,7 +137,7 @@ export struct FirstLaunchGuide {
         }.width('100%');
       } else {
         Row({ space: 12 }) {
-          if (contentStep > 0) {
+          if (this.step > 0) {
             Button('上一步')
               .layoutWeight(1)
               .height(THEME_TOKENS.touchTarget)
@@ -161,7 +161,7 @@ export struct FirstLaunchGuide {
   private actionArea(): void {
     Stack({ alignContent: Alignment.Center }) {
       Column() {
-        this.actionContent(this.step);
+        this.actionContent();
       }
       .width('100%')
       .height(96)
