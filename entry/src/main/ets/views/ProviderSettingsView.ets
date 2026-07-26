@@ -40,6 +40,12 @@ export struct ProviderSettingsView {
     this.editingDraft = { displayName: 'DeepSeek', providerKind: ProviderKind.DeepSeek, protocolStyle: ProtocolStyle.OpenAI, endpoint: 'https://api.deepseek.com', modelName: 'deepseek-v4-flash', credential: '' };
   }
   private setOnboardingStage(stage: string): void { AppStore.saveOnboardingStage(stage); }
+  private deferOnboarding(): void {
+    if (this.onboardingFlowStage.length === 0) return;
+    AppStore.completeOnboarding();
+    this.resetTransientState();
+    promptAction.showToast({ message: '已退出首次引导，可稍后继续配置服务商' });
+  }
   private onboardingProvider(): ProviderRecord | undefined { return this.providers.find((item: ProviderRecord): boolean => item.id === this.onboardingProviderId); }
   private async save(draft: ProviderDraft, id: string): Promise<void> {
     const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft;
@@ -100,6 +106,13 @@ export struct ProviderSettingsView {
        Text('密钥使用受保护存储，仅以遮罩形式显示。').fontColor(THEME_TOKENS.secondaryText);
        if (this.onboardingFlowStage === 'provider_setup') OnboardingStepBanner({ step: 1, title: '配置服务商', detail: '选择模板，确认地址、模型和 API Key 后保存。', accentColor: this.appearanceAccentColor });
        else if (this.onboardingFlowStage === 'provider_test') OnboardingStepBanner({ step: 2, title: '测试连接', detail: '供应商已启用。测试成功后将自动进入聊天。', accentColor: this.appearanceAccentColor });
+       if (this.onboardingFlowStage === 'provider_setup' || this.onboardingFlowStage === 'provider_test') Button('稍后设置')
+         .width('100%')
+         .height(40)
+         .fontColor(this.appearanceAccentColor)
+         .backgroundColor(Color.Transparent)
+         .onClick((): void => { this.deferOnboarding(); })
+         .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        if (this.editingId.length > 0 || this.editingDraft !== undefined) ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
        else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
