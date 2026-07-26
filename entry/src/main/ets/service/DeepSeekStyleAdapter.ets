@@ -8,6 +8,17 @@ interface DeepSeekMessage {
   reasoning_content?: string;
 }
 
+interface DeepSeekStreamOptions {
+  include_usage: boolean;
+}
+
+interface DeepSeekRequest {
+  model: string;
+  stream: boolean;
+  stream_options: DeepSeekStreamOptions;
+  messages: DeepSeekMessage[];
+}
+
 export class DeepSeekStyleAdapter implements ProtocolAdapter {
   style: ProtocolStyle = ProtocolStyle.OpenAI;
   private readonly parser: OpenAIStyleAdapter = new OpenAIStyleAdapter();
@@ -21,7 +32,9 @@ export class DeepSeekStyleAdapter implements ProtocolAdapter {
       return result;
     });
     const resolvedModel: string = modelName === 'deepseek-chat' || modelName === 'deepseek-reasoner' ? 'deepseek-v4-flash' : modelName;
-    return JSON.stringify({ model: resolvedModel, stream: true, messages: apiMessages });
+    const streamOptions: DeepSeekStreamOptions = { include_usage: true };
+    const request: DeepSeekRequest = { model: resolvedModel, stream: true, stream_options: streamOptions, messages: apiMessages };
+    return JSON.stringify(request);
   }
 
   parseEvent(event: string): StreamDelta {

@@ -33,6 +33,7 @@ export struct MyView {
   @State private heatEntered: boolean = false;
   @State private showHeatDetail: boolean = false;
   @State private selectedDayLabel: string = '';
+  @State private selectedDay: number = -1;
   @State private selectedDayCount: number = 0;
   @State private selectedDayTokens: number = 0;
   @State private selectedConversationTitles: string[] = [];
@@ -90,6 +91,7 @@ export struct MyView {
     this.heatmap = cells;
     this.activeDays = active;
     this.totalTokens = tokenTotal;
+    this.refreshSelectedHeatDetail(cells);
   }
 
   private heatWeeks(): Array<Array<HeatmapCell>> {
@@ -117,11 +119,24 @@ export struct MyView {
     return `${tokens}`;
   }
 
+  private refreshSelectedHeatDetail(cells: HeatmapCell[]): void {
+    if (!this.showHeatDetail || this.selectedDay < 0) return;
+    const selected: HeatmapCell | undefined = cells.find((cell: HeatmapCell): boolean => cell.day === this.selectedDay);
+    if (selected === undefined) return;
+    const records: ConversationRecord[] = AppStore.historyViewModel.conversations
+      .filter((item: ConversationRecord): boolean => Math.floor(item.updatedAt / DAY_MS) === selected.day)
+      .sort((left: ConversationRecord, right: ConversationRecord): number => right.updatedAt - left.updatedAt);
+    this.selectedDayCount = selected.count;
+    this.selectedDayTokens = selected.tokens;
+    this.selectedConversationTitles = records.slice(0, 3).map((item: ConversationRecord): string => item.title || '未命名会话');
+  }
+
   private openHeatDetail(cell: HeatmapCell): void {
     const records: ConversationRecord[] = AppStore.historyViewModel.conversations
       .filter((item: ConversationRecord): boolean => Math.floor(item.updatedAt / DAY_MS) === cell.day)
       .sort((left: ConversationRecord, right: ConversationRecord): number => right.updatedAt - left.updatedAt);
     this.selectedDayLabel = this.dayLabel(cell.day);
+    this.selectedDay = cell.day;
     this.selectedDayCount = cell.count;
     this.selectedDayTokens = cell.tokens;
     this.selectedConversationTitles = records.slice(0, 3).map((item: ConversationRecord): string => item.title || '未命名会话');

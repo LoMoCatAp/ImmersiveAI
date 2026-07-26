@@ -172,6 +172,7 @@ export class ChatViewModel {
           assistant.inputTokens = delta.usage.inputTokens;
           assistant.outputTokens = delta.usage.outputTokens;
           assistant.totalTokens = delta.usage.totalTokens;
+          hilog.info(0x0000, 'AIBoxStream', 'usage input=%{public}d output=%{public}d total=%{public}d', assistant.inputTokens, assistant.outputTokens, assistant.totalTokens);
         }
         this.publishAssistantContent(assistant.id, assistant.content);
         this.publishAssistantReasoning(assistant.id, assistant.reasoningContent);
