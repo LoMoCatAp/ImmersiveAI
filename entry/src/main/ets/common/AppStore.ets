@@ -10,6 +10,7 @@ import { StreamingChatService } from '../service/StreamingChatService';
 import { AppShellViewModel } from '../viewmodel/AppShellViewModel';
 import { preferences } from '@kit.ArkData';
 import { MaterialLevel } from '../model/ShellModels';
+import { FirstLaunchDetector } from './FirstLaunchDetector';
 
 export class AppStore {
   static readonly shellViewModel: AppShellViewModel = new AppShellViewModel();
@@ -38,6 +39,25 @@ export class AppStore {
   static saveAppearance(key: string, value: string): void {
     AppStore.materialPreferences?.putSync(key, value);
     AppStore.materialPreferences?.flushSync();
+  }
+  static async publishStartupNotice(): Promise<void> {
+    const info = await FirstLaunchDetector.detect();
+    const installIdentity: string = `${info.firstInstallTime}`;
+    const versionIdentity: string = `${info.versionCode}`;
+    const previousInstall: string = AppStore.readAppearance('startup_install_identity', '');
+    const previousVersion: string = AppStore.readAppearance('startup_version_identity', '');
+    const isFirstInstall: boolean = previousInstall.length === 0 || (installIdentity !== '0' && previousInstall !== installIdentity);
+    const isFirstRunOfVersion: boolean = previousVersion !== versionIdentity;
+    AppStore.saveAppearance('startup_install_identity', installIdentity);
+    AppStore.saveAppearance('startup_version_identity', versionIdentity);
+    if (!isFirstInstall && !isFirstRunOfVersion) return;
+    AppStorage.setOrCreate('startup_is_first_install', isFirstInstall);
+    AppStorage.set('startup_is_first_install', isFirstInstall);
+    AppStorage.setOrCreate('startup_version_name', info.versionName);
+    AppStorage.set('startup_version_name', info.versionName);
+    const revision: number = Date.now();
+    AppStorage.setOrCreate('startup_notice_revision', revision);
+    AppStorage.set('startup_notice_revision', revision);
   }
   static async initialize(context: common.UIAbilityContext): Promise<void> {
     if (AppStore.initialized || AppStore.initializing) return;

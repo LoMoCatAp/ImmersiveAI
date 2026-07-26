@@ -25,7 +25,9 @@ export struct HistoryView {
   }
 
   private async create(): Promise<void> {
-    const provider: ProviderRecord | undefined = AppStore.providerViewModel.records.find((item: ProviderRecord): boolean => item.enabled);
+    const selectedProviderId: string = AppStore.readAppearance('chat_selected_provider_id', '');
+    const provider: ProviderRecord | undefined = AppStore.providerViewModel.records.find((item: ProviderRecord): boolean => item.enabled && item.id === selectedProviderId)
+      ?? AppStore.providerViewModel.records.find((item: ProviderRecord): boolean => item.enabled);
     const providerId: string = provider === undefined ? '' : provider.id;
     const modelName: string = provider === undefined ? '' : provider.modelName;
     const id: string = await AppStore.historyViewModel.create(providerId, modelName);

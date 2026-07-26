@@ -47,6 +47,7 @@ export struct ChatView {
   private readonly attachmentCharacterLimit: number = 50000;
   @StorageLink('appearance_chat_text_size') private chatTextSize: string = '16';
   @StorageLink('provider_revision') @Watch('onProviderRevisionChanged') private providerRevision: number = 0;
+  @StorageLink('chat_provider_selection_revision') @Watch('onProviderSelectionChanged') private providerSelectionRevision: number = 0;
   @StorageLink('chat_stream_revision') @Watch('onStreamRevisionChanged') private streamRevision: number = 0;
   @StorageLink('chat_live_assistant_id') @Watch('onLiveAssistantChanged') private liveAssistantId: string = '';
   @StorageLink('chat_live_conversation_id') private liveConversationId: string = '';
@@ -73,6 +74,12 @@ export struct ChatView {
   }
 
   private onProviderRevisionChanged(): void {
+    void this.refreshProviders();
+  }
+
+  private onProviderSelectionChanged(): void {
+    this.selectedProviderId = AppStore.readAppearance('chat_selected_provider_id', '');
+    this.modelOverride = AppStore.readAppearance('chat_model_override', '');
     void this.refreshProviders();
   }
 
@@ -192,6 +199,16 @@ export struct ChatView {
     if (selected === undefined) return;
     this.selectedProviderId = selected.id;
     if (this.modelOverride.length === 0) this.modelOverride = selected.modelName;
+    AppStore.saveAppearance('chat_selected_provider_id', this.selectedProviderId);
+  }
+
+  private selectProvider(provider: ProviderRecord): void {
+    this.selectedProviderId = provider.id;
+    this.modelOverride = provider.modelName;
+    this.availableModels = [];
+    this.modelDiscoveryMessage = '';
+    AppStore.saveAppearance('chat_selected_provider_id', provider.id);
+    AppStore.saveAppearance('chat_model_override', this.modelOverride);
   }
 
   private async refreshModels(): Promise<void> {
@@ -381,6 +398,7 @@ export struct ChatView {
   }
 
   private restoreMoreSettings(): void {
+    this.selectedProviderId = AppStore.readAppearance('chat_selected_provider_id', '');
     this.modelOverride = AppStore.readAppearance('chat_model_override', '');
     this.systemPrompt = AppStore.readAppearance('chat_system_prompt', '');
     const context: number = Number(AppStore.readAppearance('chat_context_count', '16'));
@@ -419,12 +437,7 @@ export struct ChatView {
       } else {
         Row({ space: 8 }) {
           Select(this.providerOptions()).selected(this.providerIndex()).value(this.providerOptions()[this.providerIndex()].value).onSelect((index: number): void => {
-            this.selectedProviderId = this.providers[index].id;
-            this.modelOverride = this.providers[index].modelName;
-            this.conversationId = '';
-            this.messages = [];
-            this.availableModels = [];
-            this.modelDiscoveryMessage = '';
+            this.selectProvider(this.providers[index]);
           }).layoutWeight(1);
           Button('+').onClick((): void => { void this.createNewConversation(); }).height(THEME_TOKENS.touchTarget).width(THEME_TOKENS.touchTarget).fontSize(24).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
         }.width('100%');

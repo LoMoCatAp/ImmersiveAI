@@ -2,6 +2,7 @@ import { MainShellView } from '../views/MainShellView';
 import { THEME_TOKENS, contentWidthFor, pagePaddingFor } from '../common/ThemeTokens';
 import { AppStore } from '../common/AppStore';
 import { CustomTheme } from '@kit.ArkUI';
+import { promptAction } from '@kit.ArkUI';
 
 @Entry
 @Component
@@ -10,11 +11,29 @@ struct Index {
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @StorageLink('appearance_page_background') private appearancePageBackground: string = '';
+  @StorageLink('startup_notice_revision') @Watch('onStartupNoticeChanged') private startupNoticeRevision: number = 0;
+  @StorageLink('startup_is_first_install') private startupIsFirstInstall: boolean = false;
+  @StorageLink('startup_version_name') private startupVersionName: string = '';
+  @State private startupNoticeShown: boolean = false;
 
   aboutToAppear(): void {
     AppStorage.setOrCreate('appearance_color_mode', AppStore.readAppearance('color_mode', 'system'));
     AppStorage.setOrCreate('appearance_accent_color', AppStore.readAppearance('accent_color', '#3559D8'));
     AppStorage.setOrCreate('appearance_page_background', AppStore.readAppearance('page_background', ''));
+    this.showStartupNotice();
+  }
+
+  private onStartupNoticeChanged(): void {
+    this.showStartupNotice();
+  }
+
+  private showStartupNotice(): void {
+    if (this.startupNoticeShown || this.startupNoticeRevision <= 0) return;
+    this.startupNoticeShown = true;
+    const message: string = this.startupIsFirstInstall
+      ? '已通过系统应用状态检测到首次安装。首次启动引导将在后续版本提供；现在可先前往“供应商”添加并测试 AI 服务。'
+      : `已检测到 ${this.startupVersionName} 版本首次运行。首次启动引导将在后续版本提供；当前设置与本地会话会继续保留。`;
+    void promptAction.showDialog({ title: '欢迎使用 AIBox', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
   }
 
   private activeColorMode(): ThemeColorMode {

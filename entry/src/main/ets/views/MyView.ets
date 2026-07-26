@@ -8,7 +8,7 @@ import { common } from '@kit.AbilityKit';
 interface AppearanceOption { value: string; label: string; }
 interface HeatmapCell { day: number; level: number; count: number; tokens: number; }
 
-enum MySection { Home = 'home', Settings = 'settings', About = 'about' }
+enum MySection { Home = 'home', Settings = 'settings', About = 'about', Privacy = 'privacy' }
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
@@ -375,7 +375,24 @@ export struct MyView {
         ListItem() { Column({ space: 5 }) { Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold).width('100%'); Text('作者：LomoCat').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); Text('版本：1.0.0').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); }.width('100%').padding(16); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() { Row() { Text('GitHub').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('github.com/LoMoCatAp/ImmersiveAI').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openGitHub()); }
-      }.width('100%').height(156).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+        ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+        ListItem() { Row() { Column({ space: 3 }) { Text('隐私政策').fontSize(17).fontWeight(FontWeight.Medium); Text('本地数据、第三方服务与权限说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText); }.width('100%').padding(16).onClick((): void => { this.navigateTo(MySection.Privacy); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 }); }
+      }.width('100%').height(230).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+    }.width('100%');
+  }
+
+  @Builder
+  private privacyContent(): void {
+    Column({ space: 16 }) {
+      this.pageHeader('隐私政策');
+      Column({ space: 14 }) {
+        Text('生效日期：2026 年 7 月 26 日').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
+        Text('AIBox 仅在设备本地保存供应商配置、会话记录、外观设置与 Token 统计。API Key 使用系统资产存储能力保存，不会发送至开发者服务器。').fontSize(15).lineHeight(22).width('100%');
+        Text('当您发起对话、测试连接、查询模型或启用联网搜索时，输入内容、系统提示词、上下文及导入文件文本会直接发送到您自行配置的第三方 AI 服务商。相关数据的处理规则由该服务商的隐私政策和服务条款决定。').fontSize(15).lineHeight(22).width('100%');
+        Text('导入文件仅会在应用临时目录中读取；其文本会在您发送消息时作为附件内容加入请求，临时文件会在读取后清理。应用不读取通讯录、位置、通话记录或设备标识符。').fontSize(15).lineHeight(22).width('100%');
+        Text('应用申请网络权限仅用于连接您配置的 AI 服务。您可以删除会话或供应商；卸载应用或在系统设置中清除应用数据将删除本地保存的数据和凭据。').fontSize(15).lineHeight(22).width('100%');
+        Text('本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。').fontSize(15).lineHeight(22).width('100%');
+      }.padding(18).width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18).alignItems(HorizontalAlign.Start);
     }.width('100%');
   }
 
@@ -383,7 +400,8 @@ export struct MyView {
     Column() {
       if (this.section === MySection.Home) this.homeContent();
       else if (this.section === MySection.Settings) this.settingsContent();
-      else this.aboutContent();
+      else if (this.section === MySection.About) this.aboutContent();
+      else this.privacyContent();
     }
     .width('100%')
     .height('100%')

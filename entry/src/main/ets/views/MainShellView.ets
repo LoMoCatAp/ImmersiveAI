@@ -55,6 +55,15 @@ export struct MainShellView {
   }
 
   private async openHistory(id: string): Promise<void> {
+    await AppStore.historyViewModel.load();
+    const conversation = AppStore.historyViewModel.conversations.find((item) => item.id === id);
+    if (conversation !== undefined) {
+      AppStore.saveAppearance('chat_selected_provider_id', conversation.providerId);
+      AppStore.saveAppearance('chat_model_override', conversation.modelName);
+      const revision: number = Date.now();
+      AppStorage.setOrCreate('chat_provider_selection_revision', revision);
+      AppStorage.set('chat_provider_selection_revision', revision);
+    }
     if (id.length > 0) await AppStore.chatViewModel.load(id);
     this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() });
   }
