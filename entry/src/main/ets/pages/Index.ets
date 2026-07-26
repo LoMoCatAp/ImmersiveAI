@@ -32,6 +32,10 @@ struct Index {
   }
 
   onBackPress(): boolean {
+    if (this.showOnboarding) {
+      this.deferOnboarding();
+      return true;
+    }
     if (this.selectedTab !== ShellTab.My || this.mySection === 'home') return false;
     const revision: number = Date.now();
     AppStorage.setOrCreate('my_back_request_revision', revision);
