@@ -50,36 +50,52 @@ export struct FirstLaunchGuide {
       Column({ space: 28 }) {
         this.progress();
         this.guideBody();
-        Row({ space: 12 }) {
-          if (this.step > 0) {
-            Button('上一步')
+        if (this.step === 2) {
+          Column({ space: 8 }) {
+            Button('去配置服务商')
+              .width('100%')
+              .height(THEME_TOKENS.touchTarget)
+              .fontColor(Color.White)
+              .backgroundColor(this.accentColor)
+              .onClick((): void => { this.onBeginProviderSetup(); })
+              .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+            Row({ space: 12 }) {
+              Button('上一步')
+                .layoutWeight(1)
+                .height(40)
+                .fontColor(this.accentColor)
+                .backgroundColor(Color.Transparent)
+                .onClick((): void => { this.step -= 1; })
+                .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+              Button('稍后设置')
+                .layoutWeight(1)
+                .height(40)
+                .fontColor(this.accentColor)
+                .backgroundColor(Color.Transparent)
+                .onClick((): void => { this.onDefer(); })
+                .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+            }.width('100%');
+          }.width('100%');
+        } else {
+          Row({ space: 12 }) {
+            if (this.step > 0) {
+              Button('上一步')
+                .layoutWeight(1)
+                .height(THEME_TOKENS.touchTarget)
+                .fontColor(this.accentColor)
+                .backgroundColor(Color.Transparent)
+                .onClick((): void => { this.step -= 1; })
+                .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+            }
+            Button('下一步')
               .layoutWeight(1)
               .height(THEME_TOKENS.touchTarget)
-              .fontColor(this.accentColor)
-              .backgroundColor(Color.Transparent)
-              .onClick((): void => { this.step -= 1; })
+              .fontColor(Color.White)
+              .backgroundColor(this.accentColor)
+              .onClick((): void => { this.step += 1; })
               .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
-          }
-          if (this.step === 2) {
-            Button('稍后设置')
-              .layoutWeight(1)
-              .height(THEME_TOKENS.touchTarget)
-              .fontColor(this.accentColor)
-              .backgroundColor(Color.Transparent)
-              .onClick((): void => { this.onDefer(); })
-              .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
-          }
-          Button(this.step === 2 ? '去配置服务商' : '下一步')
-            .layoutWeight(1)
-            .height(THEME_TOKENS.touchTarget)
-            .fontColor(Color.White)
-            .backgroundColor(this.accentColor)
-            .onClick((): void => {
-              if (this.step < 2) this.step += 1;
-              else this.onBeginProviderSetup();
-            })
-            .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
-        }.width('100%');
+          }.width('100%');
+        }
       }
       .width('88%')
       .constraintSize({ maxWidth: 480 })
