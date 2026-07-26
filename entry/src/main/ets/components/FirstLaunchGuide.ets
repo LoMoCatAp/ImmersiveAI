@@ -1,4 +1,5 @@
 import { THEME_TOKENS } from '../common/ThemeTokens';
+import { AppStore } from '../common/AppStore';
 
 @Component
 export struct FirstLaunchGuide {
@@ -9,14 +10,18 @@ export struct FirstLaunchGuide {
   @State private visibleHint: string = '';
   @State private bodyOpacity: number = 0;
   @State private bodyOffsetX: number = 0;
+  @State private actionOpacity: number = 0;
+  @State private actionOffsetX: number = 0;
   @State private isTransitioning: boolean = false;
-  private typingRevision: number = 0;
+  private transitionRevision: number = 0;
   onBeginProviderSetup: () => void = (): void => {};
   onDefer: () => void = (): void => {};
 
   aboutToAppear(): void {
-    this.startTypewriter();
-    setTimeout((): void => { this.bodyOpacity = 1; }, 16);
+    this.transitionRevision += 1;
+    this.isTransitioning = false;
+    this.step = AppStore.readOnboardingIntroStep();
+    this.showCurrentStepFromRight();
   }
 
   private titleForStep(): string {
@@ -37,59 +42,50 @@ export struct FirstLaunchGuide {
     return '';
   }
 
-  private startTypewriter(): void {
-    this.typingRevision += 1;
-    const revision: number = this.typingRevision;
-    this.visibleTitle = '';
-    this.visibleDetail = '';
-    this.visibleHint = '';
-    this.typeTitle(revision, 0);
+  private updateVisibleText(): void {
+    this.visibleTitle = this.titleForStep();
+    this.visibleDetail = this.detailForStep();
+    this.visibleHint = this.hintForStep();
   }
 
-  private typeTitle(revision: number, index: number): void {
-    if (revision !== this.typingRevision) return;
-    const source: string = this.titleForStep();
-    this.visibleTitle = source.substring(0, index);
-    if (index < source.length) {
-      setTimeout((): void => { this.typeTitle(revision, index + 1); }, 34);
-      return;
-    }
-    setTimeout((): void => { this.typeDetail(revision, 0); }, 60);
-  }
-
-  private typeDetail(revision: number, index: number): void {
-    if (revision !== this.typingRevision) return;
-    const source: string = this.detailForStep();
-    this.visibleDetail = source.substring(0, index);
-    if (index < source.length) {
-      setTimeout((): void => { this.typeDetail(revision, index + 1); }, 18);
-      return;
-    }
-    setTimeout((): void => { this.typeHint(revision, 0); }, 80);
-  }
-
-  private typeHint(revision: number, index: number): void {
-    if (revision !== this.typingRevision) return;
-    const source: string = this.hintForStep();
-    this.visibleHint = source.substring(0, index);
-    if (index < source.length) setTimeout((): void => { this.typeHint(revision, index + 1); }, 20);
+  private showCurrentStepFromRight(): void {
+    this.updateVisibleText();
+    this.bodyOpacity = 0;
+    this.actionOpacity = 0;
+    this.bodyOffsetX = 44;
+    this.actionOffsetX = 44;
+    setTimeout((): void => {
+      this.bodyOpacity = 1;
+      this.actionOpacity = 1;
+      this.bodyOffsetX = 0;
+      this.actionOffsetX = 0;
+    }, 16);
   }
 
   private changeStep(delta: number): void {
     const target: number = this.step + delta;
     if (this.isTransitioning || target < 0 || target > 2) return;
     this.isTransitioning = true;
-    this.typingRevision += 1;
+    this.transitionRevision += 1;
+    const revision: number = this.transitionRevision;
     const forward: boolean = delta > 0;
     this.bodyOpacity = 0;
+    this.actionOpacity = 0;
     this.bodyOffsetX = forward ? -48 : 48;
+    this.actionOffsetX = forward ? -48 : 48;
     setTimeout((): void => {
+      if (revision !== this.transitionRevision) return;
       this.step = target;
+      AppStore.saveOnboardingIntroStep(target);
       this.bodyOffsetX = forward ? 48 : -48;
-      this.startTypewriter();
+      this.actionOffsetX = forward ? 48 : -48;
+      this.updateVisibleText();
       setTimeout((): void => {
+        if (revision !== this.transitionRevision) return;
         this.bodyOpacity = 1;
+        this.actionOpacity = 1;
         this.bodyOffsetX = 0;
+        this.actionOffsetX = 0;
         this.isTransitioning = false;
       }, 16);
     }, 180);
@@ -122,7 +118,7 @@ export struct FirstLaunchGuide {
       .width('100%')
       .opacity(this.bodyOpacity)
       .translate({ x: this.bodyOffsetX })
-      .animation({ duration: 180, curve: Curve.EaseOut });
+      .animation({ duration: 160, curve: Curve.EaseOut });
     }
     .width('100%')
     .height(220)
@@ -181,7 +177,10 @@ export struct FirstLaunchGuide {
     }
     .width('100%')
     .height(96)
-    .justifyContent(FlexAlign.Center);
+    .justifyContent(FlexAlign.Center)
+    .opacity(this.actionOpacity)
+    .translate({ x: this.actionOffsetX })
+    .animation({ duration: 160, curve: Curve.EaseOut });
   }
 
   build() {

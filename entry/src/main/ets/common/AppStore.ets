@@ -56,6 +56,14 @@ export class AppStore {
     AppStorage.setOrCreate('onboarding_provider_id', providerId);
     AppStorage.set('onboarding_provider_id', providerId);
   }
+  static readOnboardingIntroStep(): number {
+    const stored: number = Number(AppStore.readAppearance('onboarding_intro_step', '0'));
+    return stored === 1 || stored === 2 ? stored : 0;
+  }
+  static saveOnboardingIntroStep(step: number): void {
+    const value: number = step === 1 || step === 2 ? step : 0;
+    AppStore.saveAppearance('onboarding_intro_step', `${value}`);
+  }
   static async publishStartupNotice(): Promise<void> {
     const info = await FirstLaunchDetector.detect();
     const installIdentity: string = `${info.firstInstallTime}`;
@@ -70,6 +78,7 @@ export class AppStore {
     const hasResumableOnboarding: boolean = onboardingStage === 'provider_setup' || onboardingStage === 'provider_test' || onboardingStage === 'chat';
     AppStore.saveAppearance('startup_install_identity', installIdentity);
     AppStore.saveAppearance('startup_version_identity', versionIdentity);
+    if (isFirstInstall) AppStore.saveOnboardingIntroStep(0);
     AppStorage.setOrCreate('onboarding_flow_stage', onboardingStage);
     AppStorage.set('onboarding_flow_stage', onboardingStage);
     AppStorage.setOrCreate('onboarding_provider_id', AppStore.readOnboardingProviderId());
@@ -91,6 +100,7 @@ export class AppStore {
     AppStorage.setOrCreate('startup_should_show_onboarding', false);
     AppStorage.set('startup_should_show_onboarding', false);
     AppStore.saveOnboardingStage('completed');
+    AppStore.saveOnboardingIntroStep(0);
   }
   static async initialize(context: common.UIAbilityContext): Promise<void> {
     if (AppStore.initialized || AppStore.initializing) return;

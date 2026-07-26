@@ -61,6 +61,7 @@ struct Index {
 
   private beginProviderSetup(): void {
     this.showOnboarding = false;
+    AppStore.saveOnboardingIntroStep(0);
     AppStore.saveOnboardingStage('provider_setup');
     const revision: number = Date.now();
     AppStorage.setOrCreate('onboarding_provider_setup_revision', revision);
