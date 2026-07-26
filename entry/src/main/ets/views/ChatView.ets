@@ -19,6 +19,7 @@ import { fileIo as fs, fileUri, picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { OnboardingStepBanner } from '../components/OnboardingStepBanner';
 
 @Component
 export struct ChatView {
@@ -56,6 +57,7 @@ export struct ChatView {
   @StorageLink('chat_live_assistant_status') @Watch('onLiveAssistantStatusChanged') private liveAssistantStatus: string = '';
   @StorageLink('chat_assistant_name') private assistantName: string = '助手';
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @StorageLink('chat_rendered_assistant_content') private renderedAssistantContent: string = '{}';
   @StorageLink('chat_rendered_assistant_reasoning') private renderedAssistantReasoning: string = '{}';
   private messageScroller: Scroller = new Scroller();
@@ -449,7 +451,7 @@ export struct ChatView {
           }).layoutWeight(1);
           Button('+').onClick((): void => { void this.createNewConversation(); }).height(THEME_TOKENS.touchTarget).width(THEME_TOKENS.touchTarget).fontSize(24).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
         }.width('100%');
-        if (this.onboardingFlowStage === 'chat' && this.messages.length === 0) Text('步骤 3/3：服务商已验证。发送一条消息，确认首次对话正常完成。').fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%').padding(12).backgroundColor(THEME_TOKENS.surface).borderRadius(12);
+        if (this.onboardingFlowStage === 'chat' && this.messages.length === 0) OnboardingStepBanner({ step: 3, title: '发送第一条消息', detail: '服务商已验证。发送一条消息，确认首次对话正常完成。', accentColor: this.appearanceAccentColor });
         if (this.messages.length === 0) Text('输入消息即可开始新的会话。').margin({ top: 8 }).fontColor(THEME_TOKENS.secondaryText);
         List({ space: 8, scroller: this.messageScroller }) {
           ForEach(this.messages, (message: MessageRecord) => {

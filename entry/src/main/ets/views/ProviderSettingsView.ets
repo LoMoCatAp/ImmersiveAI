@@ -7,6 +7,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 import { ImportService } from '../service/ImportService';
 import { ShellTab } from '../model/ShellModels';
 import { promptAction } from '@kit.ArkUI';
+import { OnboardingStepBanner } from '../components/OnboardingStepBanner';
 
 @Component
 export struct ProviderSettingsView {
@@ -18,6 +19,7 @@ export struct ProviderSettingsView {
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
   @StorageLink('onboarding_provider_setup_revision') @Watch('onOnboardingProviderSetupRequested') private onboardingProviderSetupRevision: number = 0;
   @StorageLink('onboarding_provider_id') private onboardingProviderId: string = '';
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   onReturnChat: () => void = (): void => {};
   aboutToAppear(): void { this.providers = AppStore.providerViewModel.records; this.resetTransientState(); if (this.onboardingFlowStage === 'provider_setup') this.beginOnboardingProviderSetup(); void this.refresh(); }
   private onShellTabChanged(): void {
@@ -35,7 +37,7 @@ export struct ProviderSettingsView {
   private beginOnboardingProviderSetup(): void {
     this.editingId = '';
     this.importText = '';
-    this.editingDraft = { displayName: 'DeepSeek', providerKind: ProviderKind.DeepSeek, protocolStyle: ProtocolStyle.OpenAI, endpoint: 'https://api.deepseek.com', modelName: 'deepseek-chat', credential: '' };
+    this.editingDraft = { displayName: 'DeepSeek', providerKind: ProviderKind.DeepSeek, protocolStyle: ProtocolStyle.OpenAI, endpoint: 'https://api.deepseek.com', modelName: 'deepseek-v4-flash', credential: '' };
   }
   private setOnboardingStage(stage: string): void { AppStorage.setOrCreate('onboarding_flow_stage', stage); AppStorage.set('onboarding_flow_stage', stage); }
   private onboardingProvider(): ProviderRecord | undefined { return this.providers.find((item: ProviderRecord): boolean => item.id === this.onboardingProviderId); }
@@ -97,8 +99,8 @@ export struct ProviderSettingsView {
   build() {
       Column({ space: 12 }) {
        Text('密钥使用受保护存储，仅以遮罩形式显示。').fontColor(THEME_TOKENS.secondaryText);
-       if (this.onboardingFlowStage === 'provider_setup') Text('步骤 1/3：选择服务商模板，确认服务地址、模型与 API Key 后保存。').fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%').padding(12).backgroundColor(THEME_TOKENS.surface).borderRadius(12);
-       else if (this.onboardingFlowStage === 'provider_test') Text('步骤 2/3：供应商已启用。请测试连接，成功后将自动进入聊天。').fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%').padding(12).backgroundColor(THEME_TOKENS.surface).borderRadius(12);
+       if (this.onboardingFlowStage === 'provider_setup') OnboardingStepBanner({ step: 1, title: '配置服务商', detail: '选择模板，确认地址、模型和 API Key 后保存。', accentColor: this.appearanceAccentColor });
+       else if (this.onboardingFlowStage === 'provider_test') OnboardingStepBanner({ step: 2, title: '测试连接', detail: '供应商已启用。测试成功后将自动进入聊天。', accentColor: this.appearanceAccentColor });
        if (this.editingId.length > 0 || this.editingDraft !== undefined) ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
        else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
