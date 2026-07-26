@@ -43,6 +43,7 @@ export struct MyView {
   @State private contentOffset: number = 0;
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
+  @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
 
@@ -51,6 +52,10 @@ export struct MyView {
     void this.loadHeatmap();
     this.heatEntered = false;
     setTimeout((): void => { this.heatEntered = true; }, 80);
+  }
+
+  private onHistoryRevisionChanged(): void {
+    void this.loadHeatmap();
   }
 
   private loadSettings(): void {
