@@ -9,7 +9,6 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 export struct HistoryView {
   @State conversations: ConversationRecord[] = [];
   @State errorMessage: string = '';
-  @State pendingDeleteId: string = '';
   @StorageLink('history_revision') @Watch('onHistoryChanged') private historyRevision: number = 0;
   onOpen: (id: string) => void = (_id: string): void => {};
 
@@ -36,14 +35,18 @@ export struct HistoryView {
     this.conversations = AppStore.historyViewModel.conversations;
   }
 
-  private async remove(item: ConversationRecord): Promise<void> {
-    if (this.pendingDeleteId !== item.id) {
-      this.pendingDeleteId = item.id;
-      AppStore.historyViewModel.feedbackMessage = '再次点击删除以确认';
-      return;
-    }
+  private remove(item: ConversationRecord): void {
+    AlertDialog.show({
+      title: '删除会话',
+      message: `确定删除“${item.title}”吗？此会话中的本地消息将一并删除。`,
+      autoCancel: true,
+      primaryButton: { value: '取消', action: (): void => {} },
+      secondaryButton: { value: '删除', fontColor: THEME_TOKENS.danger, action: (): void => { void this.confirmRemove(item); } }
+    });
+  }
+
+  private async confirmRemove(item: ConversationRecord): Promise<void> {
     await AppStore.historyViewModel.remove(item);
-    this.pendingDeleteId = '';
     await this.refresh();
   }
 
@@ -67,11 +70,8 @@ export struct HistoryView {
                 item,
                 selected: AppStore.historyViewModel.selectedId === item.id,
                 onOpen: (): void => { AppStore.historyViewModel.select(item.id); this.onOpen(item.id); },
-                onDelete: (): void => { void this.remove(item); }
+                onDelete: (): void => { this.remove(item); }
               });
-              if (this.pendingDeleteId === item.id) {
-                Text('再次点击删除以确认').fontColor(THEME_TOKENS.danger);
-              }
             }
           }
         }, (item: ConversationRecord): string => item.id);

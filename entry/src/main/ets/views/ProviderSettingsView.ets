@@ -11,7 +11,6 @@ import { promptAction } from '@kit.ArkUI';
 @Component
 export struct ProviderSettingsView {
   @State providers: ProviderRecord[] = [];
-  @State pendingDeleteId: string = '';
   @State editingId: string = '';
   @State editingDraft: ProviderDraft | undefined = undefined;
   @State importText: string = '';
@@ -23,7 +22,6 @@ export struct ProviderSettingsView {
     if (this.shellSelectedTab === ShellTab.Providers) void this.refresh();
   }
   private resetTransientState(): void {
-    this.pendingDeleteId = '';
     this.editingId = '';
     this.editingDraft = undefined;
     this.importText = '';
@@ -32,7 +30,16 @@ export struct ProviderSettingsView {
   private async refresh(): Promise<void> { await AppStore.providerViewModel.load(); this.providers = AppStore.providerViewModel.records; }
   private async save(draft: ProviderDraft, id: string): Promise<void> { const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft; await AppStore.providerViewModel.save(value, id); AppStore.refreshShell(); this.editingId = ''; this.editingDraft = undefined; await this.refresh(); }
   private async toggle(provider: ProviderRecord): Promise<void> { await AppStore.providerViewModel.toggle(provider); AppStore.refreshShell(); await this.refresh(); }
-  private async remove(provider: ProviderRecord): Promise<void> { if (this.pendingDeleteId !== provider.id) { this.pendingDeleteId = provider.id; return; } await AppStore.providerViewModel.remove(provider); this.pendingDeleteId = ''; AppStore.refreshShell(); await this.refresh(); }
+  private remove(provider: ProviderRecord): void {
+    AlertDialog.show({
+      title: '删除供应商',
+      message: `确定删除“${provider.displayName}”吗？该操作会同时移除本机保存的 API Key。`,
+      autoCancel: true,
+      primaryButton: { value: '取消', action: (): void => {} },
+      secondaryButton: { value: '删除', fontColor: THEME_TOKENS.danger, action: (): void => { void this.confirmRemove(provider); } }
+    });
+  }
+  private async confirmRemove(provider: ProviderRecord): Promise<void> { await AppStore.providerViewModel.remove(provider); AppStore.refreshShell(); await this.refresh(); }
   private async test(provider: ProviderRecord): Promise<void> {
     const startedAt: number = Date.now();
     promptAction.showToast({ message: '正在测试连接' });
@@ -56,8 +63,7 @@ export struct ProviderSettingsView {
       if (AppStore.providerViewModel.errorMessage.length > 0) Text(AppStore.providerViewModel.errorMessage).fontColor(THEME_TOKENS.danger);
       ForEach(this.providers, (provider: ProviderRecord) => {
         Column() {
-           ProviderCard({ provider, onToggle: (): void => { void this.toggle(provider); }, onDelete: (): void => { void this.remove(provider); }, onEdit: (): void => { this.beginEdit(provider); }, onTest: (): void => { void this.test(provider); } });
-           if (this.pendingDeleteId === provider.id) Text('再次点击删除以确认移除。').fontColor(THEME_TOKENS.danger);
+           ProviderCard({ provider, onToggle: (): void => { void this.toggle(provider); }, onDelete: (): void => { this.remove(provider); }, onEdit: (): void => { this.beginEdit(provider); }, onTest: (): void => { void this.test(provider); } });
         }.transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.96, y: 0.96 })).animation({ duration: 240, curve: Curve.EaseOut }));
       });
        if (AppStore.providerViewModel.feedbackMessage.length > 0) Text(AppStore.providerViewModel.feedbackMessage).fontColor(THEME_TOKENS.success);
