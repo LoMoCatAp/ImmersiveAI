@@ -5,13 +5,9 @@ import { AppStore } from '../common/AppStore';
 export struct FirstLaunchGuide {
   @Prop accentColor: string = '#3559D8';
   @State private step: number = 0;
-  @State private visibleTitle: string = '';
-  @State private visibleDetail: string = '';
-  @State private visibleHint: string = '';
-  @State private bodyOpacity: number = 0;
-  @State private bodyOffsetX: number = 0;
-  @State private actionOpacity: number = 0;
-  @State private actionOffsetX: number = 0;
+  @State private incomingStep: number = -1;
+  @State private currentOffsetX: number = 0;
+  @State private incomingOffsetX: number = 44;
   @State private isTransitioning: boolean = false;
   private transitionRevision: number = 0;
   onBeginProviderSetup: () => void = (): void => {};
@@ -21,45 +17,27 @@ export struct FirstLaunchGuide {
     this.transitionRevision += 1;
     this.isTransitioning = false;
     this.step = AppStore.readOnboardingIntroStep();
-    this.showCurrentStepFromRight();
+    this.incomingStep = -1;
+    this.currentOffsetX = 44;
+    setTimeout((): void => { this.currentOffsetX = 0; }, 16);
   }
 
-  private titleForStep(): string {
-    if (this.step === 0) return 'AIBox';
-    if (this.step === 1) return '数据与隐私';
+  private titleForStep(step: number): string {
+    if (step === 0) return 'AIBox';
+    if (step === 1) return '数据与隐私';
     return '开始对话';
   }
 
-  private detailForStep(): string {
-    if (this.step === 0) return '在设备本地管理会话与服务商配置，直接连接您选择的 AI 服务。';
-    if (this.step === 1) return 'API Key 通过系统资产存储保存。发送消息、测试连接、查询模型或使用联网搜索时，必要内容会直接发送至您自行配置的服务商。';
+  private detailForStep(step: number): string {
+    if (step === 0) return '在设备本地管理会话与服务商配置，直接连接您选择的 AI 服务。';
+    if (step === 1) return 'API Key 通过系统资产存储保存。发送消息、测试连接、查询模型或使用联网搜索时，必要内容会直接发送至您自行配置的服务商。';
     return '先在“供应商”中添加服务地址、模型和 API Key。测试连接成功后，即可在聊天页创建会话并发送消息。';
   }
 
-  private hintForStep(): string {
-    if (this.step === 1) return '请仅添加可信服务商，并在发送前确认输入内容。';
-    if (this.step === 2) return '服务商、会话和外观设置均可随时在应用内调整。';
+  private hintForStep(step: number): string {
+    if (step === 1) return '请仅添加可信服务商，并在发送前确认输入内容。';
+    if (step === 2) return '服务商、会话和外观设置均可随时在应用内调整。';
     return '';
-  }
-
-  private updateVisibleText(): void {
-    this.visibleTitle = this.titleForStep();
-    this.visibleDetail = this.detailForStep();
-    this.visibleHint = this.hintForStep();
-  }
-
-  private showCurrentStepFromRight(): void {
-    this.updateVisibleText();
-    this.bodyOpacity = 0;
-    this.actionOpacity = 0;
-    this.bodyOffsetX = 44;
-    this.actionOffsetX = 44;
-    setTimeout((): void => {
-      this.bodyOpacity = 1;
-      this.actionOpacity = 1;
-      this.bodyOffsetX = 0;
-      this.actionOffsetX = 0;
-    }, 16);
   }
 
   private changeStep(delta: number): void {
@@ -69,26 +47,22 @@ export struct FirstLaunchGuide {
     this.transitionRevision += 1;
     const revision: number = this.transitionRevision;
     const forward: boolean = delta > 0;
-    this.bodyOpacity = 0;
-    this.actionOpacity = 0;
-    this.bodyOffsetX = forward ? -48 : 48;
-    this.actionOffsetX = forward ? -48 : 48;
+    this.incomingStep = target;
+    this.currentOffsetX = 0;
+    this.incomingOffsetX = forward ? 56 : -56;
+    AppStore.saveOnboardingIntroStep(target);
+    setTimeout((): void => {
+      if (revision !== this.transitionRevision) return;
+      this.currentOffsetX = forward ? -56 : 56;
+      this.incomingOffsetX = 0;
+    }, 16);
     setTimeout((): void => {
       if (revision !== this.transitionRevision) return;
       this.step = target;
-      AppStore.saveOnboardingIntroStep(target);
-      this.bodyOffsetX = forward ? 48 : -48;
-      this.actionOffsetX = forward ? 48 : -48;
-      this.updateVisibleText();
-      setTimeout((): void => {
-        if (revision !== this.transitionRevision) return;
-        this.bodyOpacity = 1;
-        this.actionOpacity = 1;
-        this.bodyOffsetX = 0;
-        this.actionOffsetX = 0;
-        this.isTransitioning = false;
-      }, 16);
-    }, 180);
+      this.incomingStep = -1;
+      this.currentOffsetX = 0;
+      this.isTransitioning = false;
+    }, 196);
   }
 
   @Builder
@@ -107,18 +81,33 @@ export struct FirstLaunchGuide {
   }
 
   @Builder
-  private guideBody(): void {
-    Stack({ alignContent: Alignment.TopStart }) {
+  private guideContent(contentStep: number): void {
       Column({ space: 12 }) {
-        Text(this.visibleTitle).fontSize(this.step === 0 ? 30 : 24).fontWeight(FontWeight.Bold).fontColor(THEME_TOKENS.primaryText).width('100%');
-        Text(this.visibleDetail).fontSize(16).lineHeight(24).fontColor(THEME_TOKENS.secondaryText).width('100%');
-        if (this.visibleHint.length > 0) Text(this.visibleHint).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
+        Text(this.titleForStep(contentStep)).fontSize(contentStep === 0 ? 30 : 24).fontWeight(FontWeight.Bold).fontColor(THEME_TOKENS.primaryText).width('100%');
+        Text(this.detailForStep(contentStep)).fontSize(16).lineHeight(24).fontColor(THEME_TOKENS.secondaryText).width('100%');
+        if (this.hintForStep(contentStep).length > 0) Text(this.hintForStep(contentStep)).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
       }
       .alignItems(HorizontalAlign.Start)
-      .width('100%')
-      .opacity(this.bodyOpacity)
-      .translate({ x: this.bodyOffsetX })
-      .animation({ duration: 160, curve: Curve.EaseOut });
+      .width('100%');
+  }
+
+  @Builder
+  private guideBody(): void {
+    Stack({ alignContent: Alignment.TopStart }) {
+      Column() {
+        this.guideContent(this.step);
+      }
+        .width('100%')
+        .translate({ x: this.currentOffsetX })
+        .animation({ duration: 180, curve: Curve.EaseOut });
+      if (this.incomingStep >= 0) {
+        Column() {
+          this.guideContent(this.incomingStep);
+        }
+          .width('100%')
+          .translate({ x: this.incomingOffsetX })
+          .animation({ duration: 180, curve: Curve.EaseOut });
+      }
     }
     .width('100%')
     .height(220)
@@ -126,9 +115,8 @@ export struct FirstLaunchGuide {
   }
 
   @Builder
-  private actionArea(): void {
-    Column() {
-      if (this.step === 2) {
+  private actionContent(contentStep: number): void {
+      if (contentStep === 2) {
         Column({ space: 8 }) {
           Button('去配置服务商')
             .width('100%')
@@ -156,7 +144,7 @@ export struct FirstLaunchGuide {
         }.width('100%');
       } else {
         Row({ space: 12 }) {
-          if (this.step > 0) {
+          if (contentStep > 0) {
             Button('上一步')
               .layoutWeight(1)
               .height(THEME_TOKENS.touchTarget)
@@ -174,13 +162,29 @@ export struct FirstLaunchGuide {
             .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
         }.width('100%');
       }
+  }
+
+  @Builder
+  private actionArea(): void {
+    Stack({ alignContent: Alignment.Center }) {
+      Column() {
+        this.actionContent(this.step);
+      }
+        .width('100%')
+        .translate({ x: this.currentOffsetX })
+        .animation({ duration: 180, curve: Curve.EaseOut });
+      if (this.incomingStep >= 0) {
+        Column() {
+          this.actionContent(this.incomingStep);
+        }
+          .width('100%')
+          .translate({ x: this.incomingOffsetX })
+          .animation({ duration: 180, curve: Curve.EaseOut });
+      }
     }
     .width('100%')
     .height(96)
-    .justifyContent(FlexAlign.Center)
-    .opacity(this.actionOpacity)
-    .translate({ x: this.actionOffsetX })
-    .animation({ duration: 160, curve: Curve.EaseOut });
+    .clip(true);
   }
 
   build() {
