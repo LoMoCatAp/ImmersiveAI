@@ -46,18 +46,28 @@ export class AppStore {
     const versionIdentity: string = `${info.versionCode}`;
     const previousInstall: string = AppStore.readAppearance('startup_install_identity', '');
     const previousVersion: string = AppStore.readAppearance('startup_version_identity', '');
+    const completedOnboardingInstall: string = AppStore.readAppearance('onboarding_completed_install_identity', '');
     const isFirstInstall: boolean = previousInstall.length === 0 || (installIdentity !== '0' && previousInstall !== installIdentity);
     const isFirstRunOfVersion: boolean = previousVersion !== versionIdentity;
+    const shouldShowOnboarding: boolean = completedOnboardingInstall !== installIdentity;
     AppStore.saveAppearance('startup_install_identity', installIdentity);
     AppStore.saveAppearance('startup_version_identity', versionIdentity);
-    if (!isFirstInstall && !isFirstRunOfVersion) return;
+    if (!isFirstInstall && !isFirstRunOfVersion && !shouldShowOnboarding) return;
     AppStorage.setOrCreate('startup_is_first_install', isFirstInstall);
     AppStorage.set('startup_is_first_install', isFirstInstall);
     AppStorage.setOrCreate('startup_version_name', info.versionName);
     AppStorage.set('startup_version_name', info.versionName);
+    AppStorage.setOrCreate('startup_should_show_onboarding', shouldShowOnboarding);
+    AppStorage.set('startup_should_show_onboarding', shouldShowOnboarding);
     const revision: number = Date.now();
     AppStorage.setOrCreate('startup_notice_revision', revision);
     AppStorage.set('startup_notice_revision', revision);
+  }
+  static completeOnboarding(): void {
+    const installIdentity: string = AppStore.readAppearance('startup_install_identity', '');
+    if (installIdentity.length > 0) AppStore.saveAppearance('onboarding_completed_install_identity', installIdentity);
+    AppStorage.setOrCreate('startup_should_show_onboarding', false);
+    AppStorage.set('startup_should_show_onboarding', false);
   }
   static async initialize(context: common.UIAbilityContext): Promise<void> {
     if (AppStore.initialized || AppStore.initializing) return;

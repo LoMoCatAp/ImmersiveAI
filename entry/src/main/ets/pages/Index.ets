@@ -4,6 +4,7 @@ import { AppStore } from '../common/AppStore';
 import { CustomTheme } from '@kit.ArkUI';
 import { promptAction } from '@kit.ArkUI';
 import { ShellTab } from '../model/ShellModels';
+import { FirstLaunchGuide } from '../components/FirstLaunchGuide';
 
 @Entry
 @Component
@@ -15,9 +16,12 @@ struct Index {
   @StorageLink('startup_notice_revision') @Watch('onStartupNoticeChanged') private startupNoticeRevision: number = 0;
   @StorageLink('startup_is_first_install') private startupIsFirstInstall: boolean = false;
   @StorageLink('startup_version_name') private startupVersionName: string = '';
+  @StorageLink('startup_should_show_onboarding') private startupShouldShowOnboarding: boolean = false;
+  @StorageLink('onboarding_request_revision') @Watch('onOnboardingRequested') private onboardingRequestRevision: number = 0;
   @StorageLink('shell_selected_tab') private selectedTab: number = ShellTab.Chat;
   @StorageLink('my_section') private mySection: string = 'home';
   @State private startupNoticeShown: boolean = false;
+  @State private showOnboarding: boolean = false;
 
   aboutToAppear(): void {
     AppStorage.setOrCreate('appearance_color_mode', AppStore.readAppearance('color_mode', 'system'));
@@ -38,13 +42,26 @@ struct Index {
     this.showStartupNotice();
   }
 
+  private onOnboardingRequested(): void {
+    if (this.onboardingRequestRevision > 0) this.showOnboarding = true;
+  }
+
   private showStartupNotice(): void {
     if (this.startupNoticeShown || this.startupNoticeRevision <= 0) return;
     this.startupNoticeShown = true;
+    if (this.startupShouldShowOnboarding) {
+      this.showOnboarding = true;
+      return;
+    }
     const message: string = this.startupIsFirstInstall
-      ? '已通过系统应用状态检测到首次安装。首次启动引导将在后续版本提供；现在可先前往“供应商”添加并测试 AI 服务。'
-      : `已检测到 ${this.startupVersionName} 版本首次运行。首次启动引导将在后续版本提供；当前设置与本地会话会继续保留。`;
+      ? '已检测到首次安装。欢迎使用 AIBox。'
+      : `已更新至 ${this.startupVersionName}，当前设置与本地会话会继续保留。`;
     void promptAction.showDialog({ title: '欢迎使用 AIBox', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
+  }
+
+  private finishOnboarding(): void {
+    AppStore.completeOnboarding();
+    this.showOnboarding = false;
   }
 
   private activeColorMode(): ThemeColorMode {
@@ -66,12 +83,18 @@ struct Index {
 
   build() {
     WithTheme({ colorMode: this.activeColorMode(), theme: this.theme() }) {
-    Column() {
-      MainShellView({
-        contentWidth: contentWidthFor(this.windowWidth),
-        pagePadding: pagePaddingFor(this.windowWidth)
-      })
-      .layoutWeight(1)
+    Stack({ alignContent: Alignment.Center }) {
+      Column() {
+        MainShellView({
+          contentWidth: contentWidthFor(this.windowWidth),
+          pagePadding: pagePaddingFor(this.windowWidth)
+        })
+        .layoutWeight(1)
+      }
+      .width('100%')
+      .height('100%');
+      if (this.showOnboarding) FirstLaunchGuide({ accentColor: this.appearanceAccentColor, onComplete: (): void => { this.finishOnboarding(); } })
+        .transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.96, y: 0.96 })).animation({ duration: 220, curve: Curve.EaseOut }));
     }
     .width('100%')
     .height('100%')

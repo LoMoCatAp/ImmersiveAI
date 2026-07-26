@@ -243,6 +243,12 @@ export struct MyView {
     AppStorage.set('appearance_chat_text_size', `${size}`);
   }
 
+  private openOnboarding(): void {
+    const revision: number = Date.now();
+    AppStorage.setOrCreate('onboarding_request_revision', revision);
+    AppStorage.set('onboarding_request_revision', revision);
+  }
+
   private openGitHub(): void {
     const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
     void context.startAbility({ action: 'ohos.want.action.viewData', uri: 'https://github.com/LoMoCatAp/ImmersiveAI' });
@@ -366,6 +372,18 @@ export struct MyView {
   }
 
   @Builder
+  private guideList(): void {
+    List({ space: 0 }) {
+      ListItem() {
+        Row({ space: 12 }) {
+          Column({ space: 3 }) { Text('使用引导').fontSize(17).fontWeight(FontWeight.Medium); Text('重新查看服务商配置与隐私说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.openOnboarding(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
+      }
+    }.width('100%').height(72).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+  }
+
+  @Builder
   private homeContent(): void {
     Column({ space: 16 }) {
       this.pageHeader('我的');
@@ -386,6 +404,8 @@ export struct MyView {
       this.chatAppearanceList();
       Text('沉浸光感').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 12 });
       this.materialList();
+      Text('使用').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 12 });
+      this.guideList();
     }.width('100%');
   }
 
