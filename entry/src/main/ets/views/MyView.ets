@@ -6,7 +6,7 @@ import { SystemBarAppearance } from '../common/SystemBarAppearance';
 import { common } from '@kit.AbilityKit';
 
 interface AppearanceOption { value: string; label: string; }
-interface HeatmapCell { day: number; level: number; }
+interface HeatmapCell { day: number; level: number; count: number; }
 
 enum MySection { Home = 'home', Settings = 'settings', About = 'about' }
 
@@ -31,6 +31,13 @@ export struct MyView {
   @State private heatmap: HeatmapCell[] = [];
   @State private activeDays: number = 0;
   @State private heatEntered: boolean = false;
+  @State private showHeatDetail: boolean = false;
+  @State private selectedDayLabel: string = '';
+  @State private selectedDayCount: number = 0;
+  @State private selectedConversationTitles: string[] = [];
+  @State private contentOpacity: number = 1;
+  @State private contentOffset: number = 0;
+  @State private isNavigating: boolean = false;
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
 
@@ -64,7 +71,7 @@ export struct MyView {
       const count: number = counts.get(day) ?? 0;
       const level: number = count === 0 ? 0 : count === 1 ? 1 : count < 4 ? 2 : count < 8 ? 3 : 4;
       if (level > 0) active++;
-      cells.push({ day, level });
+      cells.push({ day, level, count });
     }
     this.heatmap = cells;
     this.activeDays = active;
@@ -82,6 +89,38 @@ export struct MyView {
     if (level === 2) return 0.52;
     if (level === 3) return 0.74;
     return 1;
+  }
+
+  private dayLabel(day: number): string {
+    const date: Date = new Date(day * DAY_MS);
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+
+  private openHeatDetail(cell: HeatmapCell): void {
+    const records: ConversationRecord[] = AppStore.historyViewModel.conversations
+      .filter((item: ConversationRecord): boolean => Math.floor(item.updatedAt / DAY_MS) === cell.day)
+      .sort((left: ConversationRecord, right: ConversationRecord): number => right.updatedAt - left.updatedAt);
+    this.selectedDayLabel = this.dayLabel(cell.day);
+    this.selectedDayCount = cell.count;
+    this.selectedConversationTitles = records.slice(0, 3).map((item: ConversationRecord): string => item.title || '未命名会话');
+    this.showHeatDetail = false;
+    setTimeout((): void => { this.showHeatDetail = true; }, 16);
+  }
+
+  private navigateTo(next: MySection): void {
+    if (this.isNavigating || next === this.section) return;
+    this.isNavigating = true;
+    this.contentOpacity = 0;
+    this.contentOffset = next === MySection.Home ? 20 : -20;
+    setTimeout((): void => {
+      this.section = next;
+      this.contentOffset = next === MySection.Home ? -12 : 12;
+      setTimeout((): void => {
+        this.contentOpacity = 1;
+        this.contentOffset = 0;
+        this.isNavigating = false;
+      }, 20);
+    }, 150);
   }
 
   private labels(options: AppearanceOption[]): string[] { return options.map((option: AppearanceOption): string => option.label); }
@@ -136,7 +175,7 @@ export struct MyView {
   @Builder
   private pageHeader(title: string): void {
     Row({ space: 10 }) {
-      if (this.section !== MySection.Home) Button('返回').onClick((): void => { this.section = MySection.Home; }).height(36).fontSize(14).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+      if (this.section !== MySection.Home) Button('返回').onClick((): void => { this.navigateTo(MySection.Home); }).height(36).fontSize(14).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
       Text(title).fontSize(24).fontWeight(FontWeight.Bold).layoutWeight(1);
     }.width('100%');
   }
@@ -162,7 +201,9 @@ export struct MyView {
                 .backgroundColor(THEME_TOKENS.primary)
                 .opacity(this.heatOpacity(cell.level))
                 .scale({ x: this.heatEntered ? 1 : 0.55, y: this.heatEntered ? 1 : 0.55 })
-                .animation({ duration: 260, delay: (weekIndex * 7 + dayIndex) * 10, curve: Curve.EaseOut });
+                .animation({ duration: 260, delay: (weekIndex * 7 + dayIndex) * 10, curve: Curve.EaseOut })
+                .onClick((): void => this.openHeatDetail(cell))
+                .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
             }, (cell: HeatmapCell): string => `${cell.day}`);
           };
         }, (_week: HeatmapCell[], index: number): string => `${index}`);
@@ -178,20 +219,49 @@ export struct MyView {
   }
 
   @Builder
+  private heatDetailPanel(): void {
+    Column({ space: 8 }) {
+      Row() {
+        Text(this.selectedDayLabel).fontSize(16).fontWeight(FontWeight.Medium).layoutWeight(1);
+        Button({ type: ButtonType.Circle }) {
+          Text('×').fontSize(20).fontColor(THEME_TOKENS.secondaryText);
+        }.width(28).height(28).backgroundColor(Color.Transparent).onClick((): void => { this.showHeatDetail = false; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
+      }.width('100%');
+      Text(this.selectedDayCount > 0 ? `当天更新了 ${this.selectedDayCount} 个会话` : '当天没有本地会话活动')
+        .fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
+      if (this.selectedConversationTitles.length > 0) {
+        Column({ space: 4 }) {
+          Text('最近会话').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
+          ForEach(this.selectedConversationTitles, (title: string): void => {
+            Text(title).fontSize(14).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).width('100%');
+          }, (title: string, index: number): string => `${index}-${title}`);
+        }.alignItems(HorizontalAlign.Start).width('100%');
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor(THEME_TOKENS.surface)
+    .borderRadius(18)
+    .opacity(this.showHeatDetail ? 1 : 0)
+    .translate({ y: this.showHeatDetail ? 0 : -10 })
+    .animation({ duration: 220, curve: Curve.EaseOut });
+  }
+
+  @Builder
   private entryList(): void {
     List({ space: 0 }) {
       ListItem() {
         Row({ space: 12 }) {
           Column({ space: 3 }) { Text('设置').fontSize(17).fontWeight(FontWeight.Medium); Text('外观、聊天与沉浸光感').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.section = MySection.Settings; });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Settings); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
           Column({ space: 3 }) { Text('关于').fontSize(17).fontWeight(FontWeight.Medium); Text('AIBox、版本与项目地址').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.section = MySection.About; });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.About); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
     }.width('100%').height(132).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
@@ -222,6 +292,7 @@ export struct MyView {
     Column({ space: 16 }) {
       this.pageHeader('我的');
       this.heatmapCard();
+      if (this.showHeatDetail) this.heatDetailPanel();
       Text('应用').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 4 });
       this.entryList();
     }.width('100%');
@@ -257,6 +328,12 @@ export struct MyView {
       if (this.section === MySection.Home) this.homeContent();
       else if (this.section === MySection.Settings) this.settingsContent();
       else this.aboutContent();
-    }.width('100%').height('100%').padding({ left: 20, right: 20, top: 28, bottom: 132 });
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 20, right: 20, top: 28, bottom: 132 })
+    .opacity(this.contentOpacity)
+    .translate({ x: this.contentOffset })
+    .animation({ duration: 180, curve: Curve.EaseOut });
   }
 }
