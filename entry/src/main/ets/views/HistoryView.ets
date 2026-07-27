@@ -111,6 +111,15 @@ export struct HistoryView {
           Text('历史会话').fontSize(24).fontWeight(FontWeight.Bold);
           Text(`本地保存 ${this.conversations.length} 个会话`).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
         }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+        Button({ type: ButtonType.Circle }) {
+          Image($r('app.media.chat_add')).width(21).height(21).fillColor(THEME_TOKENS.primaryText);
+        }
+          .accessibilityText('新建会话')
+          .onClick((): void => { void this.create(); })
+          .width(44)
+          .height(44)
+          .backgroundColor(THEME_TOKENS.primary)
+          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.86 });
       }.width('100%').padding({ bottom: 4 });
       if (AppStore.historyViewModel.feedbackMessage.length > 0) {
         Text(AppStore.historyViewModel.feedbackMessage).fontSize(13).fontColor(THEME_TOKENS.success).width('100%');

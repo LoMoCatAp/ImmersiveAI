@@ -161,24 +161,7 @@ export struct ProviderSettingsView {
   }
   build() {
       Column({ space: 12 }) {
-       Row() {
-         Column({ space: 4 }) {
-           Text('供应商').fontSize(24).fontWeight(FontWeight.Bold);
-           Text(`已配置 ${this.providers.length} 个服务`).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
-         }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-         if (this.editingId.length === 0 && this.editingDraft === undefined) {
-           Button({ type: ButtonType.Circle }) {
-             Image($r('app.media.chat_add')).width(21).height(21).fillColor(THEME_TOKENS.primaryText);
-           }
-             .accessibilityText('新增供应商')
-             .onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; })
-             .width(44)
-             .height(44)
-             .backgroundColor(THEME_TOKENS.primary)
-             .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.86 });
-         }
-       }.width('100%').padding({ bottom: 4 });
-       Text('密钥使用受保护存储，仅以遮罩形式显示。').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
+       Text('密钥使用受保护存储，仅以遮罩形式显示。').fontColor(THEME_TOKENS.secondaryText);
        if (this.onboardingFlowStage === 'provider_setup') OnboardingStepBanner({ step: 1, title: '配置服务商', detail: '选择模板，确认地址、模型和 API Key 后保存。', accentColor: this.appearanceAccentColor });
        else if (this.onboardingFlowStage === 'provider_test') OnboardingStepBanner({ step: 2, title: '测试连接', detail: '供应商已启用。测试成功后将自动进入聊天。', accentColor: this.appearanceAccentColor });
        if (this.onboardingFlowStage === 'provider_setup' || this.onboardingFlowStage === 'provider_test') Button('稍后设置')
@@ -190,34 +173,19 @@ export struct ProviderSettingsView {
          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        if (this.editingId.length > 0 || this.editingDraft !== undefined) {
          ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onDiscoverModels: (draft: ProviderDraft, id: string): Promise<ModelDiscoveryResult> => this.discoverEditorModels(draft, id), onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
+       } else {
+         Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+         TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
+         Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; this.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
+         if (this.importPreview !== undefined) ImportPreview({ preview: this.importPreview, onConfirm: (): void => { void this.confirmImport(); }, onCancel: (): void => { this.cancelImport(); }, onClear: (): void => { this.importText = ''; this.cancelImport(); } });
        }
       if (this.onboardingFlowStage === 'provider_test' && this.onboardingProvider() !== undefined) Button('测试引导中的供应商').onClick((): void => { const provider: ProviderRecord | undefined = this.onboardingProvider(); if (provider !== undefined) void this.test(provider); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
       if (AppStore.providerViewModel.errorMessage.length > 0) Text(AppStore.providerViewModel.errorMessage).fontColor(THEME_TOKENS.danger);
-      if (this.editingId.length === 0 && this.editingDraft === undefined) {
-        Text('已配置的供应商').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').padding({ top: 4, bottom: 2 });
-        if (this.providers.length === 0) {
-          Text('尚未配置服务。点击右上角按钮添加，或使用上方 JSON 导入。').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').padding(20).textAlign(TextAlign.Center).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
-        } else {
-          List({ space: 0 }) {
-            ForEach(this.providers, (provider: ProviderRecord, index: number) => {
-              ListItem() {
-                ProviderCard({ provider, onToggle: (): void => { void this.toggle(provider); }, onDelete: (): void => { this.remove(provider); }, onEdit: (): void => { this.beginEdit(provider); }, onTest: (): void => { void this.test(provider); } });
-              }
-              if (index < this.providers.length - 1) ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-            }, (provider: ProviderRecord): string => provider.id);
-          }
-          .width('100%')
-          .backgroundColor(THEME_TOKENS.surface)
-          .borderRadius(THEME_TOKENS.cardRadius)
-          .scrollBar(BarState.Off);
-        }
-        Text('导入配置').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').padding({ top: 8, bottom: 2 });
-        Column({ space: 10 }) {
-          TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
-          Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).layoutWeight(1).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; this.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
-          if (this.importPreview !== undefined) ImportPreview({ preview: this.importPreview, onConfirm: (): void => { void this.confirmImport(); }, onCancel: (): void => { this.cancelImport(); }, onClear: (): void => { this.importText = ''; this.cancelImport(); } });
-        }.width('100%').padding(14).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).alignItems(HorizontalAlign.Start);
-      }
+      ForEach(this.providers, (provider: ProviderRecord) => {
+        Column() {
+           ProviderCard({ provider, onToggle: (): void => { void this.toggle(provider); }, onDelete: (): void => { this.remove(provider); }, onEdit: (): void => { this.beginEdit(provider); }, onTest: (): void => { void this.test(provider); } });
+        }.transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.96, y: 0.96 })).animation({ duration: 240, curve: Curve.EaseOut }));
+      });
        if (AppStore.providerViewModel.feedbackMessage.length > 0) Text(AppStore.providerViewModel.feedbackMessage).fontColor(THEME_TOKENS.success);
     }.padding({ left: this.pagePadding, right: this.pagePadding, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%');
   }
