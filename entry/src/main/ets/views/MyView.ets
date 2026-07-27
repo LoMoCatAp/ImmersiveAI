@@ -9,12 +9,21 @@ import { common } from '@kit.AbilityKit';
 interface AppearanceOption { value: string; label: string; }
 interface HeatmapCell { day: number; level: number; count: number; tokens: number; }
 interface ChangelogEntry { version: string; date: string; items: string[]; }
+interface PrivacyEntry { title: string; content: string; }
 
 enum MySection { Home = 'home', Settings = 'settings', About = 'about', Privacy = 'privacy' }
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
+const PRIVACY_ENTRIES: PrivacyEntry[] = [
+  { title: '本地存储', content: 'AIBox 仅在设备本地保存供应商配置、会话记录、外观设置与 Token 统计。API Key 使用系统资产存储能力保存，不会发送至开发者服务器。' },
+  { title: '第三方服务', content: '当您发起对话、测试连接、查询模型或启用联网搜索时，输入内容、系统提示词、上下文及导入文件文本会直接发送到您自行配置的第三方 AI 服务商。相关数据的处理规则由该服务商的隐私政策和服务条款决定。' },
+  { title: '导入文件', content: '导入文件仅会在应用临时目录中读取；其文本会在您发送消息时作为附件内容加入请求，临时文件会在读取后清理。应用不读取通讯录、位置、通话记录或设备标识符。' },
+  { title: '权限与删除', content: '应用申请网络权限仅用于连接您配置的 AI 服务。您可以删除会话或供应商；卸载应用或在系统设置中清除应用数据将删除本地保存的数据和凭据。' },
+  { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
+];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.29', date: '2026-07-27', items: ['隐私政策改为独立信息卡片布局。'] },
   { version: '1.0.28', date: '2026-07-27', items: ['重构更新日志的独立卡片布局与回弹进场动效。', '调整日志头部位置，避开系统关闭按钮。'] },
   { version: '1.0.27', date: '2026-07-27', items: ['修复 New API 连接 JSON 的导入预览显示。', '同步首页更新说明内容。'] },
   { version: '1.0.26', date: '2026-07-27', items: ['优化更新日志视觉样式、图标显示与展开动效。'] },
@@ -59,7 +68,7 @@ export struct MyView {
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
   @State private showChangelog: boolean = false;
-  @State private expandedChangelogVersion: string = '1.0.28';
+  @State private expandedChangelogVersion: string = '1.0.29';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
@@ -527,15 +536,21 @@ export struct MyView {
   private privacyContent(): void {
     Column({ space: 16 }) {
       this.pageHeader('隐私政策');
-      Column({ space: 14 }) {
-        Text('生效日期：2026 年 7 月 26 日').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
-        Text('AIBox 仅在设备本地保存供应商配置、会话记录、外观设置与 Token 统计。API Key 使用系统资产存储能力保存，不会发送至开发者服务器。').fontSize(15).lineHeight(22).width('100%');
-        Text('当您发起对话、测试连接、查询模型或启用联网搜索时，输入内容、系统提示词、上下文及导入文件文本会直接发送到您自行配置的第三方 AI 服务商。相关数据的处理规则由该服务商的隐私政策和服务条款决定。').fontSize(15).lineHeight(22).width('100%');
-        Text('导入文件仅会在应用临时目录中读取；其文本会在您发送消息时作为附件内容加入请求，临时文件会在读取后清理。应用不读取通讯录、位置、通话记录或设备标识符。').fontSize(15).lineHeight(22).width('100%');
-        Text('应用申请网络权限仅用于连接您配置的 AI 服务。您可以删除会话或供应商；卸载应用或在系统设置中清除应用数据将删除本地保存的数据和凭据。').fontSize(15).lineHeight(22).width('100%');
-        Text('本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。').fontSize(15).lineHeight(22).width('100%');
-      }.padding(18).width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18).alignItems(HorizontalAlign.Start);
-    }.width('100%');
+      Scroll() {
+        Column({ space: 10 }) {
+          Column({ space: 4 }) {
+            Text('生效日期').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
+            Text('2026 年 7 月 26 日').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
+          }.padding(16).width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18).alignItems(HorizontalAlign.Start);
+          ForEach(PRIVACY_ENTRIES, (entry: PrivacyEntry): void => {
+            Column({ space: 8 }) {
+              Text(entry.title).fontSize(16).fontWeight(FontWeight.Medium).width('100%');
+              Text(entry.content).fontSize(15).lineHeight(22).fontColor(THEME_TOKENS.primaryText).width('100%');
+            }.padding(16).width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18).alignItems(HorizontalAlign.Start);
+          }, (entry: PrivacyEntry): string => entry.title);
+        }.width('100%');
+      }.layoutWeight(1).width('100%').scrollBar(BarState.Auto).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+    }.width('100%').height('100%');
   }
 
   build() {
