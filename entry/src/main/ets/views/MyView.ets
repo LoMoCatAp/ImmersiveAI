@@ -281,6 +281,11 @@ export struct MyView {
     void context.startAbility({ action: 'ohos.want.action.viewData', uri: 'https://github.com/LoMoCatAp/ImmersiveAI' });
   }
 
+  private openAfdian(): void {
+    const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+    void context.startAbility({ action: 'ohos.want.action.viewData', uri: 'https://ifdian.net/a/lomocat' });
+  }
+
   private openChangelog(): void {
     this.expandedChangelogVersion = CHANGELOG_ENTRIES[0].version;
     this.changelogContentEntered = false;
@@ -524,6 +529,8 @@ export struct MyView {
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() { Row() { Text('GitHub').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('github.com/LoMoCatAp/ImmersiveAI').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openGitHub()); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+        ListItem() { Row() { Text('爱发电').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('ifdian.net/a/lomocat').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openAfdian()); }
+        ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() {
           Row() {
             Column({ space: 3 }) {
@@ -535,7 +542,7 @@ export struct MyView {
         }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() { Row() { Column({ space: 3 }) { Text('隐私政策').fontSize(17).fontWeight(FontWeight.Medium); Text('本地数据、第三方服务与权限说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText); }.width('100%').padding(16).onClick((): void => { this.openPrivacyPolicy(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 }); }
-      }.width('100%').height(302).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+      }.width('100%').height(358).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
     }.width('100%');
   }
 
