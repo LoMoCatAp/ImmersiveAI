@@ -23,6 +23,7 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.30', date: '2026-07-27', items: ['“我的”页设置与关于改用 ArkUI 原生 Navigation 返回栏与侧滑返回。'] },
   { version: '1.0.29', date: '2026-07-27', items: ['隐私政策改为独立信息卡片布局。'] },
   { version: '1.0.28', date: '2026-07-27', items: ['重构更新日志的独立卡片布局与回弹进场动效。', '调整日志头部位置，避开系统关闭按钮。'] },
   { version: '1.0.27', date: '2026-07-27', items: ['修复 New API 连接 JSON 的导入预览显示。', '同步首页更新说明内容。'] },
@@ -64,16 +65,14 @@ export struct MyView {
   @State private heatDetailOpacity: number = 1;
   @State private heatDetailOffset: number = 0;
   @State private heatDetailScale: number = 1;
-  @State private contentOffset: number = 0;
-  @State private contentAnimationDuration: number = 0;
-  @State private isNavigating: boolean = false;
   @State private showAboutSheet: boolean = false;
   @State private aboutSheetKind: number = 0;
-  @State private expandedChangelogVersion: string = '1.0.29';
+  @State private expandedChangelogVersion: string = '1.0.30';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
+  private pageStack: NavPathStack = new NavPathStack();
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
 
@@ -102,7 +101,7 @@ export struct MyView {
   }
 
   private onBackRequested(): void {
-    if (this.backRequestRevision > 0 && this.section !== MySection.Home) this.navigateTo(MySection.Home);
+    if (this.backRequestRevision > 0 && this.section !== MySection.Home) this.returnToHome();
   }
 
   private loadSettings(): void {
@@ -211,18 +210,30 @@ export struct MyView {
   }
 
   private navigateTo(next: MySection): void {
-    if (this.isNavigating || next === this.section) return;
-    this.isNavigating = true;
-    this.contentAnimationDuration = 0;
-    this.contentOffset = next === MySection.Home ? -28 : 28;
+    if (next === MySection.Home) {
+      this.returnToHome();
+      return;
+    }
+    if (next === this.section) return;
     this.section = next;
     AppStorage.setOrCreate('my_section', next);
     AppStorage.set('my_section', next);
-    setTimeout((): void => {
-      this.contentAnimationDuration = 240;
-      this.contentOffset = 0;
-      setTimeout((): void => { this.isNavigating = false; }, 250);
-    }, 16);
+    this.pageStack.pushPathByName(next === MySection.Settings ? 'settings' : 'about', false);
+  }
+
+  private returnToHome(): void {
+    if (this.section === MySection.Home) return;
+    this.section = MySection.Home;
+    AppStorage.setOrCreate('my_section', MySection.Home);
+    AppStorage.set('my_section', MySection.Home);
+    this.pageStack.pop();
+  }
+
+  private onDestinationDisappear(section: MySection): void {
+    if (this.section !== section) return;
+    this.section = MySection.Home;
+    AppStorage.setOrCreate('my_section', MySection.Home);
+    AppStorage.set('my_section', MySection.Home);
   }
 
   private labels(options: AppearanceOption[]): string[] { return options.map((option: AppearanceOption): string => option.label); }
@@ -367,10 +378,7 @@ export struct MyView {
 
   @Builder
   private pageHeader(title: string): void {
-    Row({ space: 10 }) {
-      if (this.section !== MySection.Home) Button('返回').onClick((): void => { this.navigateTo(MySection.Home); }).height(36).fontSize(14).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
-      Text(title).fontSize(24).fontWeight(FontWeight.Bold).layoutWeight(1);
-    }.width('100%');
+    Text(title).fontSize(24).fontWeight(FontWeight.Bold).width('100%');
   }
 
   @Builder
@@ -508,7 +516,6 @@ export struct MyView {
   @Builder
   private settingsContent(): void {
     Column({ space: 12 }) {
-      this.pageHeader('设置');
       Text('外观').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 8 });
       this.appearanceList();
       Text('聊天外观').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 12 });
@@ -523,7 +530,6 @@ export struct MyView {
   @Builder
   private aboutContent(): void {
     Column({ space: 16 }) {
-      this.pageHeader('关于');
       List({ space: 0 }) {
         ListItem() { Column({ space: 5 }) { Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold).width('100%'); Text('作者：LomoCat').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); Text(`版本：${this.appVersion.length > 0 ? this.appVersion : '读取中'}`).fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); }.width('100%').padding(16); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
@@ -585,17 +591,68 @@ export struct MyView {
     else this.privacySheet();
   }
 
-  build() {
-    Column() {
-      if (this.section === MySection.Home) this.homeContent();
-      else if (this.section === MySection.Settings) this.settingsContent();
-      else this.aboutContent();
+  @Builder
+  private settingsDestination(): void {
+    NavDestination() {
+      Scroll() {
+        this.settingsContent();
+      }
+      .width('100%')
+      .height('100%')
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 16, bottom: 132 })
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
+    .title('设置')
+    .onBackPressed((): boolean => {
+      this.returnToHome();
+      return true;
+    })
+    .onDisAppear((): void => this.onDestinationDisappear(MySection.Settings));
+  }
+
+  @Builder
+  private aboutDestination(): void {
+    NavDestination() {
+      Scroll() {
+        this.aboutContent();
+      }
+      .width('100%')
+      .height('100%')
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 16, bottom: 132 })
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+    }
+    .title('关于')
+    .onBackPressed((): boolean => {
+      this.returnToHome();
+      return true;
+    })
+    .onDisAppear((): void => this.onDestinationDisappear(MySection.About));
+  }
+
+  @Builder
+  private myDestinations(name: string): void {
+    if (name === 'settings') this.settingsDestination();
+    else if (name === 'about') this.aboutDestination();
+  }
+
+  build() {
+    Navigation(this.pageStack) {
+      Scroll() {
+        this.homeContent();
+      }
+      .width('100%')
+      .height('100%')
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 28, bottom: 132 })
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+    }
+    .mode(NavigationMode.Stack)
+    .hideToolBar(true)
+    .navDestination(this.myDestinations)
     .width('100%')
     .height('100%')
-    .padding({ left: this.pagePadding, right: this.pagePadding, top: 28, bottom: 132 })
-    .translate({ x: this.contentOffset })
-    .animation({ duration: this.contentAnimationDuration, curve: Curve.EaseOut })
     .bindSheet($$this.showAboutSheet, this.aboutSheet(), {
       detents: [SheetSize.FIT_CONTENT],
       preferType: SheetType.BOTTOM,

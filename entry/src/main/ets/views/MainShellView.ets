@@ -25,7 +25,6 @@ export struct MainShellView {
   @StorageLink('onboarding_provider_setup_revision') @Watch('onOnboardingProviderSetupRequested') private onboardingProviderSetupRevision: number = 0;
   @StorageLink('onboarding_chat_request_revision') @Watch('onOnboardingChatRequested') private onboardingChatRequestRevision: number = 0;
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
-  private myScroller: Scroller = new Scroller();
   @State private materialLevel: MaterialLevel = MaterialLevel.Gentle;
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
@@ -47,7 +46,6 @@ export struct MainShellView {
     this.tabsController.bindScroller(0, this.chatScroller);
     this.tabsController.bindScroller(1, this.historyScroller);
     this.tabsController.bindScroller(2, this.providerScroller);
-    this.tabsController.bindScroller(3, this.myScroller);
     this.resumeOnboardingFlow();
     this.syncHdsTabAfterInitialBuild();
   }
@@ -149,7 +147,7 @@ export struct MainShellView {
       TabContent() { ChatView({ onNavigate: (intent: NavigationIntent): void => { this.navigate(intent); } }) }.tabBar(this.tabLabel('聊天', ShellTab.Chat))
       TabContent() { HistoryView({ onOpen: (id: string): void => { void this.openHistory(id); } }) }.tabBar(this.tabLabel('历史', ShellTab.History))
        TabContent() { Scroll(this.providerScroller) { ProviderSettingsView({ onReturnChat: (): void => { this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() }); } }) }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true }).width('100%').height('100%') }.tabBar(this.tabLabel('供应商', ShellTab.Providers))
-      TabContent() { Scroll(this.myScroller) { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } }) }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true }).width('100%').height('100%') }.tabBar(this.tabLabel('我的', ShellTab.My))
+      TabContent() { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } }) }.tabBar(this.tabLabel('我的', ShellTab.My))
     }
     .barOverlap(true)
     .vertical(false)
@@ -178,7 +176,7 @@ export struct MainShellView {
           if (this.selectedTab === ShellTab.Chat) ChatView({ onNavigate: (intent: NavigationIntent): void => { this.navigate(intent); } });
           else if (this.selectedTab === ShellTab.History) HistoryView({ onOpen: (id: string): void => { void this.openHistory(id); } });
           else if (this.selectedTab === ShellTab.Providers) Scroll(this.providerScroller) { ProviderSettingsView({ onReturnChat: (): void => { this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() }); } }) }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true }).width('100%').height('100%');
-          else Scroll(this.myScroller) { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } }) }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true }).width('100%').height('100%');
+          else MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } });
         }
         .layoutWeight(1)
         .width('100%');
