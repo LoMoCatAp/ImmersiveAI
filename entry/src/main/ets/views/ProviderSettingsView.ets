@@ -108,6 +108,43 @@ export struct ProviderSettingsView {
   }
   private beginEdit(provider: ProviderRecord): void { this.editingId = provider.id; this.editingDraft = { displayName: provider.displayName, providerKind: provider.providerKind, protocolStyle: provider.protocolStyle, endpoint: provider.endpoint, modelName: provider.modelName, credential: '' }; AppStorage.setOrCreate('provider_edit_revision', Date.now()); }
   private previewImport(): void { AppStore.providerViewModel.beginImport(ImportService.preview(this.importText)); }
+  private async confirmImport(): Promise<void> {
+    const preview = AppStore.providerViewModel.preview;
+    if (preview === undefined || preview.errors.length > 0) return;
+    if (preview.draft.modelName.trim().length > 0) {
+      await AppStore.providerViewModel.confirmImport();
+      AppStore.refreshShell();
+      await this.refresh();
+      return;
+    }
+    const discovery: ModelDiscoveryResult = await AppStore.providerViewModel.discoverModelsForDraft(preview.draft);
+    if (discovery.models.length > 0) {
+      const draft: ProviderDraft = {
+        displayName: preview.draft.displayName,
+        providerKind: preview.draft.providerKind,
+        protocolStyle: preview.draft.protocolStyle,
+        endpoint: preview.draft.endpoint,
+        modelName: discovery.models[0],
+        credential: preview.draft.credential
+      };
+      const saved: boolean = await AppStore.providerViewModel.save(draft);
+      if (saved) {
+        this.importText = '';
+        AppStore.providerViewModel.cancelImport();
+        AppStore.refreshShell();
+        await this.refresh();
+        promptAction.showToast({ message: `已导入供应商，并选择 ${draft.modelName}。` });
+        return;
+      }
+      promptAction.showToast({ message: AppStore.providerViewModel.errorMessage || '导入失败，请检查服务地址和密钥。' });
+      return;
+    }
+    this.editingId = '';
+    this.editingDraft = preview.draft;
+    this.importText = '';
+    AppStore.providerViewModel.cancelImport();
+    promptAction.showToast({ message: '未获取到模型，已保留配置，请手动填写或刷新模型列表。' });
+  }
   build() {
       Column({ space: 12 }) {
        Text('密钥使用受保护存储，仅以遮罩形式显示。').fontColor(THEME_TOKENS.secondaryText);
@@ -124,7 +161,7 @@ export struct ProviderSettingsView {
        else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
        Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
-       if (AppStore.providerViewModel.preview !== undefined) ImportPreview({ preview: AppStore.providerViewModel.preview, onConfirm: (): void => { void AppStore.providerViewModel.confirmImport(); }, onCancel: (): void => { AppStore.providerViewModel.cancelImport(); }, onClear: (): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); } });
+       if (AppStore.providerViewModel.preview !== undefined) ImportPreview({ preview: AppStore.providerViewModel.preview, onConfirm: (): void => { void this.confirmImport(); }, onCancel: (): void => { AppStore.providerViewModel.cancelImport(); }, onClear: (): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); } });
       if (this.onboardingFlowStage === 'provider_test' && this.onboardingProvider() !== undefined) Button('测试引导中的供应商').onClick((): void => { const provider: ProviderRecord | undefined = this.onboardingProvider(); if (provider !== undefined) void this.test(provider); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
       if (AppStore.providerViewModel.errorMessage.length > 0) Text(AppStore.providerViewModel.errorMessage).fontColor(THEME_TOKENS.danger);
       ForEach(this.providers, (provider: ProviderRecord) => {

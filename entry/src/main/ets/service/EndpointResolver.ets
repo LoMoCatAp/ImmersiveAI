@@ -12,10 +12,12 @@ export class EndpointResolver {
     if (provider.protocolStyle === 'openaiResponses') {
       if (endpoint.endsWith('/responses')) return endpoint;
       if (endpoint.endsWith('/chat/completions')) return `${endpoint.slice(0, -17)}/responses`;
+      if (endpoint.endsWith('/models')) return `${endpoint.slice(0, -7)}/responses`;
       if (provider.providerKind === ProviderKind.Qwen && endpoint === 'https://dashscope.aliyuncs.com') return `${endpoint}/compatible-mode/v1/responses`;
       return endpoint.endsWith('/v1') ? `${endpoint}/responses` : `${endpoint}/v1/responses`;
     }
     if (endpoint.endsWith('/chat/completions') || endpoint.endsWith('/messages') || endpoint.indexOf(':streamGenerateContent') >= 0) return endpoint;
+    if (endpoint.endsWith('/models')) return `${endpoint.slice(0, -7)}/chat/completions`;
     if (endpoint === 'https://api.deepseek.com' || endpoint === 'https://api.deepseek.com/v1') {
       return 'https://api.deepseek.com/chat/completions';
     }
@@ -38,6 +40,7 @@ export class EndpointResolver {
     if (provider.providerKind === ProviderKind.DeepSeek && (endpoint === 'https://api.deepseek.com' || endpoint === 'https://api.deepseek.com/v1')) return 'https://api.deepseek.com/models';
     if (provider.providerKind === ProviderKind.Qwen && endpoint === 'https://dashscope.aliyuncs.com') return `${endpoint}/compatible-mode/v1/models`;
     if (endpoint.endsWith('/v1')) return `${endpoint}/models`;
-    return endpoint.endsWith('/models') ? endpoint : `${endpoint}/models`;
+    if (endpoint.endsWith('/models')) return endpoint;
+    return `${endpoint}/v1/models`;
   }
 }

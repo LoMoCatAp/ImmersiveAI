@@ -35,7 +35,7 @@ export struct ProviderEditor {
     this.model = draft.modelName;
     this.kind = draft.providerKind;
     this.protocol = draft.protocolStyle;
-    if (this.existingId.length > 0) void this.refreshModels();
+    if (this.existingId.length > 0 || (this.endpoint.trim().length > 0 && this.credentialInput.trim().length > 0)) void this.refreshModels();
   }
 
   private kindIndex(): number { const index: number = PROVIDER_KINDS.findIndex((value: ProviderKind): boolean => value === this.kind); return index < 0 ? 0 : index; }
