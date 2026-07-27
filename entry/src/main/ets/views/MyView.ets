@@ -15,6 +15,7 @@ enum MySection { Home = 'home', Settings = 'settings', About = 'about', Privacy 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.28', date: '2026-07-27', items: ['重构更新日志的独立卡片布局与回弹进场动效。', '调整日志头部位置，避开系统关闭按钮。'] },
   { version: '1.0.27', date: '2026-07-27', items: ['修复 New API 连接 JSON 的导入预览显示。', '同步首页更新说明内容。'] },
   { version: '1.0.26', date: '2026-07-27', items: ['优化更新日志视觉样式、图标显示与展开动效。'] },
   { version: '1.0.25', date: '2026-07-27', items: ['支持导入 New API 中转站连接 JSON。', '修复 OpenAI 兼容服务商自动补全 /v1/models 的模型获取与连接测试。'] },
@@ -58,8 +59,8 @@ export struct MyView {
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
   @State private showChangelog: boolean = false;
-  @State private expandedChangelogVersion: string = '1.0.27';
-  @State private changelogSheetEntered: boolean = false;
+  @State private expandedChangelogVersion: string = '1.0.28';
+  @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
@@ -272,9 +273,9 @@ export struct MyView {
 
   private openChangelog(): void {
     this.expandedChangelogVersion = CHANGELOG_ENTRIES[0].version;
-    this.changelogSheetEntered = false;
+    this.changelogContentEntered = false;
     this.showChangelog = true;
-    setTimeout((): void => { this.changelogSheetEntered = true; }, 32);
+    setTimeout((): void => { this.changelogContentEntered = true; }, 80);
   }
 
   @Builder
@@ -292,12 +293,13 @@ export struct MyView {
             .fontSize(13)
             .fontColor(THEME_TOKENS.secondaryText);
         }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-      }.width('100%').padding(14).backgroundColor(THEME_TOKENS.surface).borderRadius(20);
-      Text('更新日志').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
-      List({ space: 0 }) {
-        ForEach(CHANGELOG_ENTRIES, (entry: ChangelogEntry): void => {
-          ListItem() {
-            Column({ space: 0 }) {
+      }.width('100%').margin({ top: 28 }).padding(14).backgroundColor(THEME_TOKENS.surface).borderRadius(20);
+      Column({ space: 12 }) {
+        Text('更新日志').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
+        Scroll() {
+          Column({ space: 10 }) {
+            ForEach(CHANGELOG_ENTRIES, (entry: ChangelogEntry): void => {
+              Column({ space: 0 }) {
               Row({ space: 10 }) {
                 Column({ space: 3 }) {
                   Text(`v${entry.version}`).fontSize(17).fontWeight(FontWeight.Medium);
@@ -317,32 +319,29 @@ export struct MyView {
               .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 });
               if (this.expandedChangelogVersion === entry.version) {
                 Column({ space: 8 }) {
+                  Divider().margin({ bottom: 12 });
                   ForEach(entry.items, (item: string): void => {
                     Text(`• ${item}`).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
                   }, (item: string): string => item);
-                }
-                .alignItems(HorizontalAlign.Start)
-                .width('100%')
-                .padding({ left: 16, right: 16, bottom: 16 })
-                .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: -8 })).animation({ duration: 180, curve: Curve.EaseOut }));
+                }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 16, right: 16, bottom: 16 }).transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: -8 })).animation({ duration: 180, curve: Curve.EaseOut }));
               }
-            }.width('100%');
-          }
-          ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-        }, (entry: ChangelogEntry): string => entry.version);
+              }.width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18);
+            }, (entry: ChangelogEntry): string => entry.version);
+          }.width('100%');
+        }
+        .width('100%')
+        .height(350)
+        .scrollBar(BarState.Auto)
+        .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
       }
       .width('100%')
-      .height(380)
-      .backgroundColor(THEME_TOKENS.surface)
-      .borderRadius(18)
-      .scrollBar(BarState.Auto)
-      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+      .opacity(this.changelogContentEntered ? 1 : 0)
+      .translate({ y: this.changelogContentEntered ? 0 : 24 })
+      .scale({ x: this.changelogContentEntered ? 1 : 0.97, y: this.changelogContentEntered ? 1 : 0.97 })
+      .animation({ duration: 420, curve: Curve.Friction });
     }
     .width('100%')
-    .padding({ left: 20, right: 20, top: 8, bottom: 20 })
-    .opacity(this.changelogSheetEntered ? 1 : 0)
-    .translate({ y: this.changelogSheetEntered ? 0 : 56 })
-    .animation({ duration: 280, curve: Curve.EaseOut });
+    .padding({ left: 20, right: 20, top: 8, bottom: 20 });
   }
 
   @Builder
@@ -555,7 +554,9 @@ export struct MyView {
       detents: [SheetSize.FIT_CONTENT],
       preferType: SheetType.BOTTOM,
       showClose: true,
-      onWillDismiss: (): void => { this.showChangelog = false; }
+      dragBar: false,
+      scrollSizeMode: ScrollSizeMode.CONTINUOUS,
+      onWillDismiss: (): void => { this.changelogContentEntered = false; this.showChangelog = false; }
     });
   }
 }

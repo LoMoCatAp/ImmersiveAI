@@ -71,7 +71,7 @@ struct Index {
       return;
     }
     const version: string = this.startupVersionName.length > 0 ? this.startupVersionName : '最新版本';
-    const message: string = `更新版本：${version}\n\n更新内容：\n- 支持 New API 中转站连接 JSON 的导入与模型自动获取\n- 修复 OpenAI 兼容服务商的 /v1 模型地址解析\n- 优化更新日志的图标、展开控件与下拉动效`;
+    const message: string = `更新版本：${version}\n\n更新内容：\n- 更新日志改为独立版本卡片，阅读与展开更清晰\n- 调整日志头部位置，避开系统关闭按钮\n- 新增原生回弹进场与连续滚动体验`;
     void promptAction.showDialog({ title: '更新说明', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
   }
 
