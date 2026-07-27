@@ -5,6 +5,7 @@ import { ConversationRecord } from '../model/ChatModels';
 import { SystemBarAppearance } from '../common/SystemBarAppearance';
 import { FirstLaunchDetector } from '../common/FirstLaunchDetector';
 import { common } from '@kit.AbilityKit';
+import { hdsMaterial, DynamicHideParams, HdsNavigation, HdsNavigationTitleBarOptions, HdsNavDestination, HideMode, ScrollEffectType } from '@kit.UIDesignKit';
 
 interface AppearanceOption { value: string; label: string; }
 interface HeatmapCell { day: number; level: number; count: number; tokens: number; }
@@ -23,6 +24,7 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.31', date: '2026-07-27', items: ['设置与关于接入沉浸光感标题栏，支持材质渐变模糊与滚动动态隐藏。', '上移关于页内容，优化子页面的信息起始位置。'] },
   { version: '1.0.30', date: '2026-07-27', items: ['“我的”页设置与关于改用 ArkUI 原生 Navigation 返回栏与侧滑返回。'] },
   { version: '1.0.29', date: '2026-07-27', items: ['隐私政策改为独立信息卡片布局。'] },
   { version: '1.0.28', date: '2026-07-27', items: ['重构更新日志的独立卡片布局与回弹进场动效。', '调整日志头部位置，避开系统关闭按钮。'] },
@@ -67,12 +69,15 @@ export struct MyView {
   @State private heatDetailScale: number = 1;
   @State private showAboutSheet: boolean = false;
   @State private aboutSheetKind: number = 0;
-  @State private expandedChangelogVersion: string = '1.0.30';
+  @State private expandedChangelogVersion: string = '1.0.31';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   private pageStack: NavPathStack = new NavPathStack();
+  private homeScroller: Scroller = new Scroller();
+  private settingsScroller: Scroller = new Scroller();
+  private aboutScroller: Scroller = new Scroller();
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
 
@@ -591,44 +596,75 @@ export struct MyView {
     else this.privacySheet();
   }
 
+  private immersiveTitleBar(title: string): HdsNavigationTitleBarOptions {
+    return {
+      content: { title: { mainTitle: title } },
+      style: {
+        scrollEffectOpts: {
+          enableScrollEffect: true,
+          scrollEffectType: ScrollEffectType.IMMERSIVE_GRADIENT_BLUR
+        },
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        }
+      }
+    };
+  }
+
+  private dynamicTitleBar(): DynamicHideParams {
+    return {
+      hideTitleArea: true,
+      hideStatusBar: true,
+      mode: HideMode.SCROLL_UP_TO_BLEND_SCROLL_UP,
+      hideRatio: 1
+    };
+  }
+
   @Builder
   private settingsDestination(): void {
-    NavDestination() {
-      Scroll() {
+    HdsNavDestination() {
+      Scroll(this.settingsScroller) {
         this.settingsContent();
       }
       .width('100%')
       .height('100%')
-      .padding({ left: this.pagePadding, right: this.pagePadding, top: 16, bottom: 132 })
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 8, bottom: 132 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
-    .title('设置')
+    .titleBar(this.immersiveTitleBar('设置'))
+    .dynamicHideTitleBar(this.dynamicTitleBar())
+    .bindToScrollable([this.settingsScroller])
+    .hideBackButton(false)
     .onBackPressed((): boolean => {
       this.returnToHome();
       return true;
     })
-    .onDisAppear((): void => this.onDestinationDisappear(MySection.Settings));
+    .onHidden((): void => this.onDestinationDisappear(MySection.Settings));
   }
 
   @Builder
   private aboutDestination(): void {
-    NavDestination() {
-      Scroll() {
+    HdsNavDestination() {
+      Scroll(this.aboutScroller) {
         this.aboutContent();
       }
       .width('100%')
       .height('100%')
-      .padding({ left: this.pagePadding, right: this.pagePadding, top: 16, bottom: 132 })
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
-    .title('关于')
+    .titleBar(this.immersiveTitleBar('关于'))
+    .dynamicHideTitleBar(this.dynamicTitleBar())
+    .bindToScrollable([this.aboutScroller])
+    .hideBackButton(false)
     .onBackPressed((): boolean => {
       this.returnToHome();
       return true;
     })
-    .onDisAppear((): void => this.onDestinationDisappear(MySection.About));
+    .onHidden((): void => this.onDestinationDisappear(MySection.About));
   }
 
   @Builder
@@ -638,8 +674,8 @@ export struct MyView {
   }
 
   build() {
-    Navigation(this.pageStack) {
-      Scroll() {
+    HdsNavigation(this.pageStack) {
+      Scroll(this.homeScroller) {
         this.homeContent();
       }
       .width('100%')
@@ -649,6 +685,7 @@ export struct MyView {
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
     .mode(NavigationMode.Stack)
+    .hideTitleBar(true)
     .hideToolBar(true)
     .navDestination(this.myDestinations)
     .width('100%')
