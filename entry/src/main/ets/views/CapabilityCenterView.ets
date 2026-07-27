@@ -19,8 +19,8 @@ const SEARCH_PROVIDER_OPTIONS: string[] = ['服务商原生', '本地 SearXNG', 
 const KNOWLEDGE_LIMIT_OPTIONS: string[] = ['4,000 字符', '8,000 字符', '16,000 字符'];
 const KNOWLEDGE_LIMIT_VALUES: number[] = [4000, 8000, 16000];
 const IMAGE_SIZE_OPTIONS: string[] = ['1024 x 1024', '1024 x 1536', '1536 x 1024'];
-const PROMPT_MEMORY_CONTENT_OFFSET: number = -45;
-const SKILLS_CONTENT_OFFSET: number = -45;
+const PROMPT_MEMORY_CONTENT_OFFSET: number = -49;
+const SKILLS_CONTENT_OFFSET: number = -49;
 const KNOWLEDGE_CONTENT_OFFSET: number = 33;
 const TOOLS_CONTENT_OFFSET: number = -70;
 
@@ -108,6 +108,10 @@ export struct CapabilityCenterView {
   private saveEnabled(key: string, enabled: boolean): void {
     AppStore.saveAppearance(key, enabled ? 'true' : 'false');
     this.savedMessage = enabled ? '已启用，将在下一条消息中生效' : '已关闭';
+  }
+
+  private saveEnabledSilently(key: string, enabled: boolean): void {
+    AppStore.saveAppearance(key, enabled ? 'true' : 'false');
   }
 
   private async loadSearchApiKey(): Promise<void> {
@@ -342,25 +346,28 @@ export struct CapabilityCenterView {
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('MCP 工具服务').fontSize(17).fontWeight(FontWeight.Medium); Text('保存远程 Streamable HTTP 或 SSE 配置；工具发现与执行将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-          Toggle({ type: ToggleType.Switch, isOn: this.mcpEnabled }).onChange((enabled: boolean): void => { this.mcpEnabled = enabled; this.saveEnabled('capability_mcp_enabled', enabled); if (enabled) this.showMcpSettings = true; else this.showMcpSettings = false; });
+          Toggle({ type: ToggleType.Switch, isOn: this.mcpEnabled }).onChange((enabled: boolean): void => { this.mcpEnabled = enabled; this.saveEnabledSilently('capability_mcp_enabled', enabled); this.showMcpSettings = enabled; });
           Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.mcpEnabled ? 1 : 0.32); }
-            .width(36).height(36).backgroundColor(Color.Transparent).enabled(this.mcpEnabled).onClick((): void => { this.showMcpSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+            .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showMcpSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
+            .bindSheet($$this.showMcpSettings, this.mcpSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showMcpSettings = false; } });
         }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('联网搜索').fontSize(17).fontWeight(FontWeight.Medium); Text('可选择服务商原生、本地或 API 搜索服务。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-          Toggle({ type: ToggleType.Switch, isOn: this.webSearchEnabled }).onChange((enabled: boolean): void => { this.webSearchEnabled = enabled; this.saveEnabled('capability_web_search_enabled', enabled); if (enabled) this.showSearchSettings = true; else this.showSearchSettings = false; });
+          Toggle({ type: ToggleType.Switch, isOn: this.webSearchEnabled }).onChange((enabled: boolean): void => { this.webSearchEnabled = enabled; this.saveEnabledSilently('capability_web_search_enabled', enabled); this.showSearchSettings = enabled; });
           Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.webSearchEnabled ? 1 : 0.32); }
-            .width(36).height(36).backgroundColor(Color.Transparent).enabled(this.webSearchEnabled).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+            .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
+            .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.LARGE], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showSearchSettings = false; } });
         }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-          Toggle({ type: ToggleType.Switch, isOn: this.imageEnabled }).onChange((enabled: boolean): void => { this.imageEnabled = enabled; this.saveEnabled('capability_image_enabled', enabled); if (enabled) this.showImageSettings = true; else this.showImageSettings = false; });
+          Toggle({ type: ToggleType.Switch, isOn: this.imageEnabled }).onChange((enabled: boolean): void => { this.imageEnabled = enabled; this.saveEnabledSilently('capability_image_enabled', enabled); this.showImageSettings = enabled; });
           Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.imageEnabled ? 1 : 0.32); }
-            .width(36).height(36).backgroundColor(Color.Transparent).enabled(this.imageEnabled).onClick((): void => { this.showImageSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+            .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showImageSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
+            .bindSheet($$this.showImageSettings, this.imageSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showImageSettings = false; } });
         }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
     }.width('100%');
@@ -439,7 +446,6 @@ export struct CapabilityCenterView {
     Column({ space: 12 }) {
       this.sectionTitle('工具与扩展', '联网搜索由聊天页按服务商能力启用。');
       this.extensionList();
-      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
     }.width('100%').translate({ y: TOOLS_CONTENT_OFFSET });
   }
 
@@ -459,9 +465,6 @@ export struct CapabilityCenterView {
     .width('100%')
     .height('100%')
     .scrollBar(BarState.Off)
-    .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
-    .bindSheet($$this.showMcpSettings, this.mcpSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true })
-    .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.LARGE], preferType: SheetType.BOTTOM, showClose: true, dragBar: true })
-    .bindSheet($$this.showImageSettings, this.imageSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true });
+    .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
   }
 }
