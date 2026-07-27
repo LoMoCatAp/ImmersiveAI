@@ -67,8 +67,8 @@ export struct MyView {
   @State private contentOffset: number = 0;
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
-  @State private showChangelog: boolean = false;
-  @State private showPrivacyPolicy: boolean = false;
+  @State private showAboutSheet: boolean = false;
+  @State private aboutSheetKind: number = 0;
   @State private expandedChangelogVersion: string = '1.0.29';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
@@ -284,12 +284,14 @@ export struct MyView {
   private openChangelog(): void {
     this.expandedChangelogVersion = CHANGELOG_ENTRIES[0].version;
     this.changelogContentEntered = false;
-    this.showChangelog = true;
+    this.aboutSheetKind = 1;
+    this.showAboutSheet = true;
     setTimeout((): void => { this.changelogContentEntered = true; }, 80);
   }
 
   private openPrivacyPolicy(): void {
-    this.showPrivacyPolicy = true;
+    this.aboutSheetKind = 2;
+    this.showAboutSheet = true;
   }
 
   @Builder
@@ -570,6 +572,12 @@ export struct MyView {
     .padding({ left: 20, right: 20, top: 44, bottom: 20 });
   }
 
+  @Builder
+  private aboutSheet(): void {
+    if (this.aboutSheetKind === 1) this.changelogSheet();
+    else this.privacySheet();
+  }
+
   build() {
     Column() {
       if (this.section === MySection.Home) this.homeContent();
@@ -581,21 +589,17 @@ export struct MyView {
     .padding({ left: this.pagePadding, right: this.pagePadding, top: 28, bottom: 132 })
     .translate({ x: this.contentOffset })
     .animation({ duration: this.contentAnimationDuration, curve: Curve.EaseOut })
-    .bindSheet($$this.showChangelog, this.changelogSheet(), {
+    .bindSheet($$this.showAboutSheet, this.aboutSheet(), {
       detents: [SheetSize.FIT_CONTENT],
       preferType: SheetType.BOTTOM,
       showClose: true,
       dragBar: false,
       scrollSizeMode: ScrollSizeMode.CONTINUOUS,
-      onWillDismiss: (): void => { this.changelogContentEntered = false; this.showChangelog = false; }
-    })
-    .bindSheet($$this.showPrivacyPolicy, this.privacySheet(), {
-      detents: [SheetSize.FIT_CONTENT],
-      preferType: SheetType.BOTTOM,
-      showClose: true,
-      dragBar: false,
-      scrollSizeMode: ScrollSizeMode.CONTINUOUS,
-      onWillDismiss: (): void => { this.showPrivacyPolicy = false; }
+      onWillDismiss: (): void => {
+        this.changelogContentEntered = false;
+        this.showAboutSheet = false;
+        this.aboutSheetKind = 0;
+      }
     });
   }
 }
