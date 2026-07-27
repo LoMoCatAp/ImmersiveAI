@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.lomocat.immersiveai",
     "vendor": "ImmersiveAI",
-    "versionCode": 1000025,
-    "versionName": "1.0.25",
+    "versionCode": 1000026,
+    "versionName": "1.0.26",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }

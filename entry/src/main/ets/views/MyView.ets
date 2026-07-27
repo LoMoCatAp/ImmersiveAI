@@ -15,6 +15,7 @@ enum MySection { Home = 'home', Settings = 'settings', About = 'about', Privacy 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.26', date: '2026-07-27', items: ['优化更新日志视觉样式、图标显示与展开动效。'] },
   { version: '1.0.25', date: '2026-07-27', items: ['支持导入 New API 中转站连接 JSON。', '修复 OpenAI 兼容服务商自动补全 /v1/models 的模型获取与连接测试。'] },
   { version: '1.0.24', date: '2026-07-27', items: ['新增关于页更新日志，可查看各版本功能变化。', '更新日志使用原生 ArkUI 底部弹窗呈现。'] },
   { version: '1.0.23', date: '2026-07-27', items: ['支持将对话记录导出为 Markdown 文件。', '服务商模型支持自动选择与手动刷新可用列表。', '优化兼容服务商的连接测试。'] },
@@ -56,7 +57,8 @@ export struct MyView {
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
   @State private showChangelog: boolean = false;
-  @State private expandedChangelogVersion: string = '1.0.25';
+  @State private expandedChangelogVersion: string = '1.0.26';
+  @State private changelogSheetEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
@@ -269,25 +271,27 @@ export struct MyView {
 
   private openChangelog(): void {
     this.expandedChangelogVersion = CHANGELOG_ENTRIES[0].version;
+    this.changelogSheetEntered = false;
     this.showChangelog = true;
+    setTimeout((): void => { this.changelogSheetEntered = true; }, 32);
   }
 
   @Builder
   private changelogSheet(): void {
     Column({ space: 14 }) {
+      Text('').width(36).height(4).borderRadius(2).backgroundColor(THEME_TOKENS.secondaryText).opacity(0.32);
       Row({ space: 12 }) {
-        Image($r('app.media.layered_image'))
-          .width(52)
-          .height(52)
-          .borderRadius(14)
-          .objectFit(ImageFit.Cover);
+        Stack() {
+          Image($r('app.media.background')).width(52).height(52).objectFit(ImageFit.Cover);
+          Image($r('app.media.foreground')).width(52).height(52).objectFit(ImageFit.Cover);
+        }.width(52).height(52).borderRadius(16).clip(true).backgroundColor(THEME_TOKENS.primary);
         Column({ space: 4 }) {
           Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold);
           Text(`当前版本 v${this.appVersion.length > 0 ? this.appVersion : CHANGELOG_ENTRIES[0].version}`)
             .fontSize(13)
             .fontColor(THEME_TOKENS.secondaryText);
         }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-      }.width('100%');
+      }.width('100%').padding(14).backgroundColor(THEME_TOKENS.surface).borderRadius(20);
       Text('更新日志').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
       List({ space: 0 }) {
         ForEach(CHANGELOG_ENTRIES, (entry: ChangelogEntry): void => {
@@ -298,9 +302,11 @@ export struct MyView {
                   Text(`v${entry.version}`).fontSize(17).fontWeight(FontWeight.Medium);
                   Text(entry.date).fontSize(12).fontColor(THEME_TOKENS.secondaryText);
                 }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-                Text(this.expandedChangelogVersion === entry.version ? '⌃' : '›')
-                  .fontSize(22)
-                  .fontColor(THEME_TOKENS.secondaryText);
+                Image($r('app.media.changelog_arrow'))
+                  .width(20)
+                  .height(20)
+                  .rotate({ angle: this.expandedChangelogVersion === entry.version ? 180 : 0 })
+                  .animation({ duration: 180, curve: Curve.EaseOut });
               }
               .width('100%')
               .padding({ left: 16, right: 16, top: 14, bottom: 14 })
@@ -313,7 +319,11 @@ export struct MyView {
                   ForEach(entry.items, (item: string): void => {
                     Text(`• ${item}`).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
                   }, (item: string): string => item);
-                }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 16, right: 16, bottom: 16 });
+                }
+                .alignItems(HorizontalAlign.Start)
+                .width('100%')
+                .padding({ left: 16, right: 16, bottom: 16 })
+                .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: -8 })).animation({ duration: 180, curve: Curve.EaseOut }));
               }
             }.width('100%');
           }
@@ -328,7 +338,10 @@ export struct MyView {
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
     .width('100%')
-    .padding({ left: 20, right: 20, top: 8, bottom: 20 });
+    .padding({ left: 20, right: 20, top: 8, bottom: 20 })
+    .opacity(this.changelogSheetEntered ? 1 : 0)
+    .translate({ y: this.changelogSheetEntered ? 0 : 56 })
+    .animation({ duration: 280, curve: Curve.EaseOut });
   }
 
   @Builder
