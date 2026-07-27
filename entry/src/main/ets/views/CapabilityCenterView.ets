@@ -377,13 +377,13 @@ export struct CapabilityCenterView {
             this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
             this.systemList();
             if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -15 });
+          }.width('100%').translate({ y: -25 });
         } else if (this.page === 'skills') {
           Column({ space: 12 }) {
             this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
             this.skillList();
             if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -15 });
+          }.width('100%').translate({ y: -25 });
         } else if (this.page === 'knowledge') {
           Column({ space: 12 }) {
             this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
