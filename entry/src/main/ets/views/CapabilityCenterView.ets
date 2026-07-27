@@ -419,7 +419,7 @@ export struct CapabilityCenterView {
     Column({ space: 12 }) {
       this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
       this.systemList();
-      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+      Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').height(49).padding({ top: 4, bottom: 32 }).opacity(this.savedMessage.length > 0 ? 1 : 0);
     }.width('100%').translate({ y: PROMPT_MEMORY_CONTENT_OFFSET });
   }
 
