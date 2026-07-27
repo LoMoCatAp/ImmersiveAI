@@ -231,10 +231,10 @@ export struct CapabilityCenterView {
 
   private contentOffset(): number {
     switch (this.page) {
-      case 'prompt': return -20;
-      case 'skills': return -40;
-      case 'knowledge': return 30;
-      case 'tools': return -10;
+      case 'prompt': return -15;
+      case 'skills': return -10;
+      case 'knowledge': return 3;
+      case 'tools': return this.mcpEnabled || this.imageEnabled ? -12 : -30;
       default: return 0;
     }
   }
