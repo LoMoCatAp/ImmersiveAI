@@ -25,7 +25,7 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
-  { version: '1.1.3', date: '2026-07-27', items: ['优化 UI'] },
+  { version: '1.1.3', date: '2026-07-27', items: ['优化 UI：调整能力页面布局与入口图标显示。'] },
   { version: '1.1.2', date: '2026-07-27', items: ['优化 UI'] },
   { version: '1.1.1', date: '2026-07-27', items: ['以设置页为统一基准重构子页面顶部布局，设置、关于、提示词、技能、知识库和工具与扩展不再依赖位移补偿。', '工具与扩展的开关状态变化仅在对应卡片内重排，外层滚动内容固定从统一位置开始。'] },
   { version: '1.1.0', date: '2026-07-27', items: ['统一设置、提示词、技能、知识库、工具与扩展及关于页的内容基线，修复工具开关触发的页面位置变化。', '联网搜索来源现以可点击卡片显示在回复内，并与摘要一同保存至本地会话和 Markdown 导出。'] },
@@ -729,7 +729,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
-      .translate({ y: -25 })
+      .translate({ y: -35 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }

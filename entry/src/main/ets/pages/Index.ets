@@ -71,7 +71,7 @@ struct Index {
       return;
     }
     const version: string = this.startupVersionName.length > 0 ? this.startupVersionName : '最新版本';
-    const message: string = `更新版本：${version}\n\n更新内容：\n- 隐私政策改为独立信息卡片，便于阅读长文本\n- 优化隐私页面的连续滚动体验`;
+    const message: string = `更新版本：${version}\n\n更新内容：\n- 优化 UI：调整能力页面布局与入口图标显示`;
     void promptAction.showDialog({ title: '更新说明', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
   }
 

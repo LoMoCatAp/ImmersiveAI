@@ -377,25 +377,25 @@ export struct CapabilityCenterView {
             this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
             this.systemList();
             if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -25 });
+          }.width('100%').translate({ y: -35 });
         } else if (this.page === 'skills') {
           Column({ space: 12 }) {
             this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
             this.skillList();
             if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -25 });
+          }.width('100%').translate({ y: -35 });
         } else if (this.page === 'knowledge') {
           Column({ space: 12 }) {
             this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
             this.knowledgeList();
             if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: 3 });
+          }.width('100%').translate({ y: 18 });
         } else {
           Column({ space: 12 }) {
             this.sectionTitle('工具与扩展', '联网搜索由聊天页按服务商能力启用。');
             this.extensionList();
             if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -30 });
+          }.width('100%').translate({ y: -50 });
         }
       }
       .width('100%')
