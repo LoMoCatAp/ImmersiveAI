@@ -240,7 +240,7 @@ export struct CapabilityCenterView {
         Text(title).fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
         Text(detail).fontSize(12).fontColor(THEME_TOKENS.secondaryText).opacity(0.76).width('100%');
       }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-    }.alignItems(VerticalAlign.Top).width('100%').margin({ top: 8 });
+    }.alignItems(VerticalAlign.Top).width('100%');
   }
 
   @Builder
@@ -382,7 +382,11 @@ export struct CapabilityCenterView {
           this.extensionList();
         }
         if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-      }.width('100%').padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 }).translate({ y: THEME_TOKENS.subpageContentOffset });
+      }
+      .width('100%')
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
+      .alignItems(HorizontalAlign.Start)
+      .justifyContent(FlexAlign.Start);
     }.width('100%').height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
   }
 }

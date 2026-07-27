@@ -19,7 +19,7 @@ export interface ThemeTokenSet {
   barBottomDistance: number;
   contentBottomInset: number;
   keyboardPadding: number;
-  subpageContentOffset: number;
+  subpageContentTop: number;
   chineseTextSpacing: number;
   minimumContrast: number;
   minButtonWidth: number;
@@ -49,7 +49,9 @@ export const THEME_TOKENS: ThemeTokenSet = {
   barBottomDistance: 0,
   contentBottomInset: 84,
   keyboardPadding: 24,
-  subpageContentOffset: 6,
+  // Shared destination inset. Padding keeps nested List and Toggle updates
+  // from inheriting a transform-based visual offset.
+  subpageContentTop: 14,
   chineseTextSpacing: 4,
   minimumContrast: 4.5,
   minButtonWidth: 88,
