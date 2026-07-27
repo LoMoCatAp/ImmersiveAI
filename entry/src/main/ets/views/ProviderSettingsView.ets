@@ -8,6 +8,7 @@ import { ImportService } from '../service/ImportService';
 import { ShellTab } from '../model/ShellModels';
 import { promptAction } from '@kit.ArkUI';
 import { OnboardingStepBanner } from '../components/OnboardingStepBanner';
+import { ModelDiscoveryResult } from '../service/ModelDiscoveryService';
 
 @Component
 export struct ProviderSettingsView {
@@ -48,6 +49,11 @@ export struct ProviderSettingsView {
     promptAction.showToast({ message: '已退出首次引导，可稍后继续配置服务商' });
   }
   private onboardingProvider(): ProviderRecord | undefined { return this.providers.find((item: ProviderRecord): boolean => item.id === this.onboardingProviderId); }
+  private async discoverEditorModels(draft: ProviderDraft, id: string): Promise<ModelDiscoveryResult> {
+    const existing: ProviderRecord | undefined = this.providers.find((item: ProviderRecord): boolean => item.id === id);
+    const fallbackCredential: string = existing === undefined ? '' : (await AppStore.credentials.get(existing.credentialAlias) ?? '');
+    return AppStore.providerViewModel.discoverModelsForDraft(draft, fallbackCredential);
+  }
   private async save(draft: ProviderDraft, id: string): Promise<void> {
     const value: ProviderDraft = id.length > 0 && draft.credential.length === 0 ? { displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle, endpoint: draft.endpoint, modelName: draft.modelName, credential: 'unchanged' } : draft;
     const saved: boolean = await AppStore.providerViewModel.save(value, id);
@@ -114,7 +120,7 @@ export struct ProviderSettingsView {
          .backgroundColor(Color.Transparent)
          .onClick((): void => { this.deferOnboarding(); })
          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
-       if (this.editingId.length > 0 || this.editingDraft !== undefined) ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
+       if (this.editingId.length > 0 || this.editingDraft !== undefined) ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onDiscoverModels: (draft: ProviderDraft, id: string): Promise<ModelDiscoveryResult> => this.discoverEditorModels(draft, id), onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
        else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
        Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }

@@ -66,6 +66,10 @@ export class ChatViewModel {
     this.notifyStateChanged();
   }
 
+  async messagesFor(conversationId: string): Promise<MessageRecord[]> {
+    return this.repository.messagesFor(conversationId);
+  }
+
   async newConversation(provider: ProviderRecord): Promise<string> {
     const now: number = Date.now();
     const id: string = `${now}-${Math.floor(Math.random() * 1000000)}`;

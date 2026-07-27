@@ -1,9 +1,12 @@
-import { ConversationRecord } from '../model/ChatModels';
+import { ConversationRecord, MessageRecord } from '../model/ChatModels';
 import { AppStore } from '../common/AppStore';
 import { HistoryItem } from '../components/HistoryItem';
 import { EmptyState } from '../components/EmptyState';
 import { ProviderRecord } from '../model/ProviderModels';
 import { THEME_TOKENS } from '../common/ThemeTokens';
+import { fileIo as fs, picker } from '@kit.CoreFileKit';
+import { common } from '@kit.AbilityKit';
+import { promptAction } from '@kit.ArkUI';
 
 @Component
 export struct HistoryView {
@@ -53,6 +56,43 @@ export struct HistoryView {
     await this.refresh();
   }
 
+  private fileNameFor(item: ConversationRecord): string {
+    const title: string = item.title.trim().replace(/[\\/:*?"<>|]/g, '_').slice(0, 48);
+    return `AIBox-${title.length > 0 ? title : '会话'}-${item.id}.md`;
+  }
+
+  private markdownFor(item: ConversationRecord, messages: MessageRecord[]): string {
+    const rows: string[] = [`# ${item.title || 'AIBox 会话'}`, '', `模型：${item.modelName}`, `导出时间：${new Date().toLocaleString()}`, ''];
+    messages.forEach((message: MessageRecord): void => {
+      rows.push(`## ${message.role === 'user' ? '用户' : '助手'}`, '');
+      if (message.reasoningContent.length > 0) rows.push('### 思考过程', '', message.reasoningContent, '');
+      rows.push(message.content.length > 0 ? message.content : '（无文本内容）', '');
+    });
+    return rows.join('\n');
+  }
+
+  private async exportConversation(item: ConversationRecord): Promise<void> {
+    try {
+      const messages: MessageRecord[] = await AppStore.chatViewModel.messagesFor(item.id);
+      const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+      const documentPicker: picker.DocumentViewPicker = new picker.DocumentViewPicker(context);
+      const options: picker.DocumentSaveOptions = new picker.DocumentSaveOptions();
+      options.newFileNames = [this.fileNameFor(item)];
+      options.fileSuffixChoices = ['Markdown 文档|.md'];
+      const uris: string[] = await documentPicker.save(options);
+      if (uris.length === 0) return;
+      const file: fs.File = await fs.open(uris[0], fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
+      try {
+        await fs.write(file.fd, this.markdownFor(item, messages));
+      } finally {
+        await fs.close(file);
+      }
+      promptAction.showToast({ message: '会话已导出为 Markdown 文件' });
+    } catch (_) {
+      promptAction.showToast({ message: '会话导出未完成' });
+    }
+  }
+
   build() {
     Column({ space: 12 }) {
       Button('新建会话').onClick((): void => { void this.create(); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
@@ -73,6 +113,7 @@ export struct HistoryView {
                 item,
                 selected: AppStore.historyViewModel.selectedId === item.id,
                 onOpen: (): void => { AppStore.historyViewModel.select(item.id); this.onOpen(item.id); },
+                onExport: (): void => { void this.exportConversation(item); },
                 onDelete: (): void => { this.remove(item); }
               });
             }

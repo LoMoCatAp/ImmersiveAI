@@ -27,9 +27,33 @@ export class ConnectionTestService {
     return `{"model":${JSON.stringify(provider.modelName)},"max_tokens":1,"messages":[{"role":"user","content":"ping"}]}`;
   }
 
+  private async testModelAccess(provider: ProviderRecord, credential: string): Promise<ConnectionTestResult | undefined> {
+    if (provider.protocolStyle === 'claudeStyle') return undefined;
+    const request: http.HttpRequest = http.createHttp();
+    const now: number = Date.now();
+    try {
+      const response: http.HttpResponse = await request.request(EndpointResolver.models(provider), {
+        method: http.RequestMethod.GET,
+        header: this.headersFor(provider, credential),
+        connectTimeout: 15000,
+        readTimeout: 15000
+      });
+      if (response.responseCode >= 200 && response.responseCode < 400) return { status: ConnectionTestStatus.Success, safeMessage: '服务地址和密钥验证成功。', checkedAt: now, responseSummary: `HTTP ${response.responseCode}` };
+      if (response.responseCode === 401 || response.responseCode === 403) return { status: ConnectionTestStatus.ServiceError, safeMessage: '服务拒绝了受保护密钥，请检查供应商配置。', checkedAt: now, responseSummary: `HTTP ${response.responseCode}` };
+      return undefined;
+    } catch (_) {
+      return undefined;
+    } finally {
+      request.destroy();
+    }
+  }
+
   async test(provider: ProviderRecord, credential: string): Promise<ConnectionTestResult> {
     const now: number = Date.now();
-     if (provider.endpoint.trim().length === 0 || provider.modelName.trim().length === 0 || credential.length === 0) return { status: ConnectionTestStatus.ConfigurationError, safeMessage: '测试前请填写服务地址、模型和受保护密钥。', checkedAt: now, responseSummary: '' };
+     if (provider.endpoint.trim().length === 0 || credential.length === 0) return { status: ConnectionTestStatus.ConfigurationError, safeMessage: '测试前请填写服务地址和受保护密钥。', checkedAt: now, responseSummary: '' };
+    const modelAccess: ConnectionTestResult | undefined = await this.testModelAccess(provider, credential);
+    if (modelAccess !== undefined) return modelAccess;
+    if (provider.modelName.trim().length === 0) return { status: ConnectionTestStatus.ConfigurationError, safeMessage: '当前服务未提供模型列表，请手动填写模型后重试。', checkedAt: now, responseSummary: '' };
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(EndpointResolver.chatCompletions(provider), {

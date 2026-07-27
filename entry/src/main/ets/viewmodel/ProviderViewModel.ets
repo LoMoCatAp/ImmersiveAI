@@ -3,7 +3,7 @@ import { ProviderRepository } from '../data/ProviderRepository';
 import { AssetCredentialStore } from '../data/AssetCredentialStore';
 import { ProviderRegistry } from '../service/ProviderRegistry';
 import { ConnectionTestService } from '../service/ConnectionTestService';
-import { ModelDiscoveryService } from '../service/ModelDiscoveryService';
+import { ModelDiscoveryResult, ModelDiscoveryService } from '../service/ModelDiscoveryService';
 import { ConnectionTestResult, ConnectionTestStatus, ProviderOperation } from '../model/ProviderModels';
 import { PROVIDER_MESSAGES } from '../common/AppConstants';
 export class ProviderViewModel {
@@ -129,6 +129,22 @@ export class ProviderViewModel {
       this.modelDiscoveryMessage = '获取模型失败，请稍后重试';
     } finally {
       this.operation = ProviderOperation.Idle;
+    }
+  }
+  async discoverModelsForDraft(draft: ProviderDraft, fallbackCredential: string = ''): Promise<ModelDiscoveryResult> {
+    const credential: string = draft.credential.trim().length > 0 ? draft.credential : fallbackCredential;
+    if (draft.endpoint.trim().length === 0) return { models: [], message: '请先填写服务地址后再获取模型。' };
+    if (credential.trim().length === 0) return { models: [], message: '请先填写或保存密钥后再获取模型。' };
+    const now: number = Date.now();
+    const record: ProviderRecord = {
+      id: 'draft', displayName: draft.displayName, providerKind: draft.providerKind, protocolStyle: draft.protocolStyle,
+      endpoint: draft.endpoint, modelName: draft.modelName, credentialAlias: '', maskedCredential: '', enabled: true,
+      validationState: ValidationState.Unknown, createdAt: now, updatedAt: now
+    };
+    try {
+      return await this.modelDiscoveryService.list(record, credential);
+    } catch (_) {
+      return { models: [], message: '获取模型失败，请检查网络、服务地址和密钥。' };
     }
   }
   async useDiscoveredModel(record: ProviderRecord, modelName: string): Promise<void> {
