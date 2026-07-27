@@ -84,6 +84,7 @@ export class ChatViewModel {
     };
     await this.repository.saveConversation(item);
     AppStorage.setOrCreate('history_revision', now);
+    AppStorage.set('history_revision', now);
     await this.load(id);
     return id;
   }
@@ -249,6 +250,7 @@ export class ChatViewModel {
       } : item);
       this.isGenerating = false;
       AppStorage.setOrCreate('history_revision', Date.now());
+      AppStorage.set('history_revision', Date.now());
       this.notifyStateChanged();
       AppStorage.setOrCreate('chat_live_assistant_status', assistant.status);
     }

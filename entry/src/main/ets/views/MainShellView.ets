@@ -171,6 +171,7 @@ export struct MainShellView {
     }
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
+      .onClick((): void => { this.selectedTab = tab; })
       .width('100%')
       .height(52)
       .backgroundColor('#00000000');

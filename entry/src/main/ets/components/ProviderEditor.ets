@@ -78,7 +78,9 @@ export struct ProviderEditor {
           Select(PROTOCOL_OPTIONS).selected(this.protocolIndex()).value(PROTOCOL_OPTIONS[this.protocolIndex()].value).onSelect((index: number): void => { this.protocol = PROTOCOLS[index]; }).width('100%');
         }
         TextInput({ placeholder: '供应商名称', text: this.name }).onChange((value: string): void => { this.name = value; });
-        TextInput({ placeholder: '服务地址，例如 https://api.example.com（可省略 /v1 和接口路径）', text: this.endpoint }).onChange((value: string): void => { this.endpoint = value; });
+        TextInput({ placeholder: '服务地址，例如 https://api.example.com（可省略 /v1 和接口路径）', text: this.endpoint })
+          .defaultFocus(this.existingId.length === 0)
+          .onChange((value: string): void => { this.endpoint = value; });
         if (this.showOnboardingGuide) {
           Column({ space: 4 }) {
             Text('地址填写提示').fontSize(14).fontWeight(FontWeight.Medium);
