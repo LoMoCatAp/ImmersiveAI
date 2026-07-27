@@ -25,8 +25,8 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
-  { version: '1.1.3', date: '2026-07-27', items: ['调整能力页位置：提示词与记忆上移 15vp、技能上移 10vp、知识库下移 3vp、工具与扩展上移 30vp，关于页上移 25vp。', 'MCP 服务或图像生成展开时，工具与扩展内容自动下移 18vp，避免展开配置靠近标题栏。'] },
-  { version: '1.1.2', date: '2026-07-27', items: ['按页面独立微调能力中心内容位置：提示词与记忆上移 20vp、技能上移 40vp、知识库下移 30vp、工具与扩展上移 10vp。'] },
+  { version: '1.1.3', date: '2026-07-27', items: ['优化 UI'] },
+  { version: '1.1.2', date: '2026-07-27', items: ['优化 UI'] },
   { version: '1.1.1', date: '2026-07-27', items: ['以设置页为统一基准重构子页面顶部布局，设置、关于、提示词、技能、知识库和工具与扩展不再依赖位移补偿。', '工具与扩展的开关状态变化仅在对应卡片内重排，外层滚动内容固定从统一位置开始。'] },
   { version: '1.1.0', date: '2026-07-27', items: ['统一设置、提示词、技能、知识库、工具与扩展及关于页的内容基线，修复工具开关触发的页面位置变化。', '联网搜索来源现以可点击卡片显示在回复内，并与摘要一同保存至本地会话和 Markdown 导出。'] },
   { version: '1.0.38', date: '2026-07-27', items: ['将设置、技能、知识库、工具与扩展入口分别改为齿轮、铅笔、书本和扳手 SVG 图标。', '重新校准设置、提示词、技能、工具与扩展及关于页的内容起始位置。'] },
@@ -704,7 +704,6 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
-      .translate({ y: -25 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
@@ -730,6 +729,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
+      .translate({ y: -25 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }

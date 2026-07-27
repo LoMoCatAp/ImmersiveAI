@@ -229,16 +229,6 @@ export struct CapabilityCenterView {
     return SKILLS.map((skill: SkillOption): SelectOption => ({ value: skill.name }));
   }
 
-  private contentOffset(): number {
-    switch (this.page) {
-      case 'prompt': return -15;
-      case 'skills': return -10;
-      case 'knowledge': return 3;
-      case 'tools': return this.mcpEnabled || this.imageEnabled ? -12 : -30;
-      default: return 0;
-    }
-  }
-
   @Builder
   private sectionTitle(title: string, detail: string): void {
     Row({ space: 8 }) {
@@ -345,10 +335,12 @@ export struct CapabilityCenterView {
       Column({ space: 8 }) {
         Row() { Column({ space: 3 }) { Text('MCP 工具服务').fontSize(17).fontWeight(FontWeight.Medium); Text('保存远程 Streamable HTTP 或 SSE 配置；工具发现与执行将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.mcpEnabled }).onChange((enabled: boolean): void => { this.mcpEnabled = enabled; this.saveEnabled('capability_mcp_enabled', enabled); }); }.width('100%');
         if (this.mcpEnabled) {
-          Select(MCP_TRANSPORT_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.mcpTransportIndex).value(MCP_TRANSPORT_OPTIONS[this.mcpTransportIndex]).onSelect((index: number): void => { this.mcpTransportIndex = index; this.save('capability_mcp_transport', `${index}`); }).width('100%');
-          TextInput({ placeholder: 'https://example.com/mcp', text: this.mcpEndpoint }).onChange((value: string): void => { this.mcpEndpoint = value; }).width('100%');
-          TextInput({ placeholder: '超时秒数', text: this.mcpTimeout }).type(InputType.Number).onChange((value: string): void => { this.mcpTimeout = value; }).width('100%');
-          Button('保存 MCP 配置').onClick((): void => { this.save('capability_mcp_endpoint', this.mcpEndpoint); this.save('capability_mcp_timeout', this.mcpTimeout); }).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+          Column({ space: 8 }) {
+            Select(MCP_TRANSPORT_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.mcpTransportIndex).value(MCP_TRANSPORT_OPTIONS[this.mcpTransportIndex]).onSelect((index: number): void => { this.mcpTransportIndex = index; this.save('capability_mcp_transport', `${index}`); }).width('100%');
+            TextInput({ placeholder: 'https://example.com/mcp', text: this.mcpEndpoint }).onChange((value: string): void => { this.mcpEndpoint = value; }).width('100%');
+            TextInput({ placeholder: '超时秒数', text: this.mcpTimeout }).type(InputType.Number).onChange((value: string): void => { this.mcpTimeout = value; }).width('100%');
+            Button('保存 MCP 配置').onClick((): void => { this.save('capability_mcp_endpoint', this.mcpEndpoint); this.save('capability_mcp_timeout', this.mcpTimeout); }).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+          }.width('100%').margin({ top: 18 });
         }
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
@@ -366,10 +358,12 @@ export struct CapabilityCenterView {
       Column({ space: 8 }) {
         Row() { Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.imageEnabled }).onChange((enabled: boolean): void => { this.imageEnabled = enabled; this.saveEnabled('capability_image_enabled', enabled); }); }.width('100%');
         if (this.imageEnabled) {
-          TextInput({ placeholder: '服务地址', text: this.imageEndpoint }).onChange((value: string): void => { this.imageEndpoint = value; }).width('100%');
-          TextInput({ placeholder: '图像模型名称', text: this.imageModel }).onChange((value: string): void => { this.imageModel = value; }).width('100%');
-          Select(IMAGE_SIZE_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.imageSizeIndex).value(IMAGE_SIZE_OPTIONS[this.imageSizeIndex]).onSelect((index: number): void => { this.imageSizeIndex = index; }).width('100%');
-          Button('保存图像生成配置').onClick((): void => { this.save('capability_image_endpoint', this.imageEndpoint); this.save('capability_image_model', this.imageModel); this.save('capability_image_size', `${this.imageSizeIndex}`); }).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+          Column({ space: 8 }) {
+            TextInput({ placeholder: '服务地址', text: this.imageEndpoint }).onChange((value: string): void => { this.imageEndpoint = value; }).width('100%');
+            TextInput({ placeholder: '图像模型名称', text: this.imageModel }).onChange((value: string): void => { this.imageModel = value; }).width('100%');
+            Select(IMAGE_SIZE_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.imageSizeIndex).value(IMAGE_SIZE_OPTIONS[this.imageSizeIndex]).onSelect((index: number): void => { this.imageSizeIndex = index; }).width('100%');
+            Button('保存图像生成配置').onClick((): void => { this.save('capability_image_endpoint', this.imageEndpoint); this.save('capability_image_model', this.imageModel); this.save('capability_image_size', `${this.imageSizeIndex}`); }).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+          }.width('100%').margin({ top: 18 });
         }
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
     }.width('100%');
@@ -377,27 +371,37 @@ export struct CapabilityCenterView {
 
   build() {
     Scroll(this.contentScroller) {
-      Column({ space: 12 }) {
+      Column() {
         if (this.page === 'prompt') {
-          this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
-          this.systemList();
+          Column({ space: 12 }) {
+            this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
+            this.systemList();
+            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+          }.width('100%').translate({ y: -15 });
         } else if (this.page === 'skills') {
-          this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
-          this.skillList();
+          Column({ space: 12 }) {
+            this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
+            this.skillList();
+            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+          }.width('100%').translate({ y: -10 });
         } else if (this.page === 'knowledge') {
-          this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
-          this.knowledgeList();
+          Column({ space: 12 }) {
+            this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
+            this.knowledgeList();
+            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+          }.width('100%').translate({ y: 3 });
         } else {
-          this.sectionTitle('工具与扩展', '联网搜索由聊天页按服务商能力启用。');
-          this.extensionList();
+          Column({ space: 12 }) {
+            this.sectionTitle('工具与扩展', '联网搜索由聊天页按服务商能力启用。');
+            this.extensionList();
+            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+          }.width('100%').translate({ y: -30 });
         }
-        if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
       }
       .width('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
       .alignItems(HorizontalAlign.Start)
-      .justifyContent(FlexAlign.Start)
-      .translate({ y: this.contentOffset() });
+      .justifyContent(FlexAlign.Start);
     }.width('100%').height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
   }
 }
