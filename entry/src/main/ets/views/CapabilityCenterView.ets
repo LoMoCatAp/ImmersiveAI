@@ -358,7 +358,7 @@ export struct CapabilityCenterView {
           Toggle({ type: ToggleType.Switch, isOn: this.webSearchEnabled }).onChange((enabled: boolean): void => { this.webSearchEnabled = enabled; this.saveEnabledSilently('capability_web_search_enabled', enabled); this.showSearchSettings = enabled; });
           Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.webSearchEnabled ? 1 : 0.32); }
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
-            .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.LARGE], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showSearchSettings = false; } });
+            .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showSearchSettings = false; } });
         }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
