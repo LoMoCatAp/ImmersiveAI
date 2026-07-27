@@ -229,6 +229,16 @@ export struct CapabilityCenterView {
     return SKILLS.map((skill: SkillOption): SelectOption => ({ value: skill.name }));
   }
 
+  private contentOffset(): number {
+    switch (this.page) {
+      case 'prompt': return -20;
+      case 'skills': return -40;
+      case 'knowledge': return 30;
+      case 'tools': return -10;
+      default: return 0;
+    }
+  }
+
   @Builder
   private sectionTitle(title: string, detail: string): void {
     Row({ space: 8 }) {
@@ -386,7 +396,8 @@ export struct CapabilityCenterView {
       .width('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
       .alignItems(HorizontalAlign.Start)
-      .justifyContent(FlexAlign.Start);
+      .justifyContent(FlexAlign.Start)
+      .translate({ y: this.contentOffset() });
     }.width('100%').height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
   }
 }
