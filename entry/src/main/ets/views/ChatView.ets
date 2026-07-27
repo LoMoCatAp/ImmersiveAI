@@ -20,7 +20,7 @@ import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { OnboardingStepBanner } from '../components/OnboardingStepBanner';
-import { WebSearchConfiguration, WebSearchProvider, WebSearchResponse, WebSearchService } from '../service/WebSearchService';
+import { WebSearchConfiguration, WebSearchProvider, WebSearchResponse, WebSearchResult, WebSearchService } from '../service/WebSearchService';
 
 @Component
 export struct ChatView {
@@ -107,6 +107,7 @@ export struct ChatView {
       role: item.role,
       content: this.liveAssistantContent,
       reasoningContent: this.liveAssistantReasoning,
+      sourceData: item.sourceData,
       status: completedStatus,
       errorSummary: item.errorSummary,
       createdAt: item.createdAt,
@@ -123,6 +124,7 @@ export struct ChatView {
       role: item.role,
       content: item.content,
       reasoningContent: item.reasoningContent,
+      sourceData: item.sourceData,
       status: item.status,
       errorSummary: item.errorSummary,
       createdAt: item.createdAt,
@@ -184,6 +186,61 @@ export struct ChatView {
 
   private showToast(message: string): void {
     promptAction.showToast({ message });
+  }
+
+  private searchSources(serialized: string | undefined): WebSearchResult[] {
+    return this.webSearchService.resultsFromSerialized(serialized ?? '');
+  }
+
+  private sourceHost(url: string): string {
+    return url.replace(/^https?:\/\//, '').split('/')[0];
+  }
+
+  private openSearchSource(url: string): void {
+    const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+    void context.startAbility({ action: 'ohos.want.action.viewData', uri: url });
+  }
+
+  @Builder
+  private sourceCards(serialized: string | undefined): void {
+    if (this.searchSources(serialized).length > 0) {
+      Column({ space: 6 }) {
+        Text('联网来源').fontSize(12).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 4 });
+        ForEach(this.searchSources(serialized), (source: WebSearchResult, index: number): void => {
+          Button() {
+            Column({ space: 3 }) {
+              Row({ space: 8 }) {
+                Text(`[${index + 1}] ${source.title.length > 0 ? source.title : '未命名来源'}`)
+                  .fontSize(13)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(THEME_TOKENS.primaryText)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  .layoutWeight(1);
+                Text('打开').fontSize(12).fontColor(THEME_TOKENS.primary);
+              }.width('100%');
+              Text(this.sourceHost(source.url)).fontSize(11).fontColor(THEME_TOKENS.primary).width('100%').maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis });
+              if (source.snippet.length > 0) Text(source.snippet).fontSize(12).fontColor(THEME_TOKENS.secondaryText).width('100%').maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis });
+            }.alignItems(HorizontalAlign.Start).width('100%');
+          }
+          .width('100%')
+          .padding({ left: 10, right: 10, top: 8, bottom: 8 })
+          .backgroundColor(THEME_TOKENS.surface)
+          .borderRadius(12)
+          .onClick((): void => this.openSearchSource(source.url))
+          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 });
+        }, (source: WebSearchResult, index: number): string => `${index}-${source.url}`);
+      }.alignItems(HorizontalAlign.Start).width('100%');
+    }
+  }
+
+  private liveSourceData(): string {
+    return this.liveMessage()?.sourceData ?? '';
+  }
+
+  @Builder
+  private liveSourceCards(): void {
+    this.sourceCards(this.liveSourceData());
   }
 
   @Builder
@@ -273,7 +330,7 @@ export struct ChatView {
     AppStore.saveAppearance('chat_web_search_enabled', this.webSearchEnabled ? 'true' : 'false');
   }
 
-  private async externalSearchContext(query: string): Promise<string> {
+  private async externalSearch(query: string): Promise<WebSearchResponse> {
     const provider: WebSearchProvider = this.configuredSearchProvider();
     const endpoint: string = AppStore.readAppearance('capability_web_search_endpoint', '');
     const apiKey: string = (await AppStore.credentials.get('aibox.web_search_api_key')) ?? '';
@@ -281,10 +338,10 @@ export struct ChatView {
     const response: WebSearchResponse = await this.webSearchService.search(query, configuration);
     if (response.error.length > 0) {
       this.showToast(`${response.error} 已按普通对话发送。`);
-      return '';
+      return response;
     }
     this.showToast(`已引用 ${response.results.length} 条联网搜索结果`);
-    return this.webSearchService.contextFor(response);
+    return response;
   }
 
   private async send(text: string): Promise<void> {
@@ -313,13 +370,16 @@ export struct ChatView {
     const outgoingText: string = `${text}${attachment}`.trim();
     let systemPrompt: string = AppStore.composeCapabilityPrompt(text);
     const useExternalSearch: boolean = this.webSearchEnabled && this.usesExternalWebSearch();
+    let sourceData: string = '';
     if (useExternalSearch) {
       this.preparingSearch = true;
-      const searchContext: string = await this.externalSearchContext(text);
+      const searchResponse: WebSearchResponse = await this.externalSearch(text);
       this.preparingSearch = false;
+      const searchContext: string = this.webSearchService.contextFor(searchResponse);
       if (searchContext.length > 0) systemPrompt = systemPrompt.length > 0 ? `${systemPrompt}\n\n${searchContext}` : searchContext;
+      if (searchResponse.results.length > 0) sourceData = this.webSearchService.serializeResults(searchResponse.results);
     }
-    await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, systemPrompt, Number(this.contextCount), this.webSearchEnabled && !useExternalSearch && this.nativeWebSearchAvailable());
+    await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, systemPrompt, Number(this.contextCount), this.webSearchEnabled && !useExternalSearch && this.nativeWebSearchAvailable(), sourceData);
     const assistant: MessageRecord | undefined = AppStore.chatViewModel.messages.slice().reverse().find((item: MessageRecord): boolean => item.role === 'assistant');
     if (this.onboardingFlowStage === 'chat' && assistant !== undefined && assistant.status === MessageStatus.Completed) {
       AppStore.completeOnboarding();
@@ -522,6 +582,7 @@ export struct ChatView {
                       if (this.displayedAssistantContent(message).length > 0) {
                         this.markdownContent(this.displayedAssistantContent(message));
                       }
+                      this.sourceCards(message.sourceData);
                       if (message.errorSummary.length > 0) Text(message.errorSummary).fontColor(THEME_TOKENS.danger).wordBreak(WordBreak.BREAK_ALL);
                     } else {
                       Text(message.content).fontSize(this.messageTextSize()).fontColor(THEME_TOKENS.primaryText).wordBreak(WordBreak.BREAK_ALL).copyOption(CopyOptions.LocalDevice);
@@ -574,6 +635,7 @@ export struct ChatView {
                       this.markdownContent(this.liveDisplayContent);
                     }
                   }
+                  this.liveSourceCards();
                   if (this.liveAssistantStatus === 'generating' && this.liveDisplayContent.length === 0) Text('正在思考…').fontColor(THEME_TOKENS.secondaryText);
                   if (this.liveAssistantStatus === 'generating' && this.liveDisplayContent.length > 0) Text('正在生成…').fontColor(THEME_TOKENS.secondaryText);
                 }

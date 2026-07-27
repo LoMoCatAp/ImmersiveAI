@@ -119,17 +119,17 @@ export class ChatViewModel {
     return compact.length > 24 ? `${compact.slice(0, 24)}…` : compact || '新会话';
   }
 
-  async send(provider: ProviderRecord, conversationId: string, credential: string, adapter: ProtocolAdapter, text: string, systemPrompt: string = '', contextCount: number = 0, enableWebSearch: boolean = false): Promise<void> {
+  async send(provider: ProviderRecord, conversationId: string, credential: string, adapter: ProtocolAdapter, text: string, systemPrompt: string = '', contextCount: number = 0, enableWebSearch: boolean = false, sourceData: string = ''): Promise<void> {
     if (this.isGenerating || text.trim().length === 0 || !provider.enabled || conversationId.length === 0) return;
     if (this.currentConversationId !== conversationId) await this.load(conversationId);
 
     const now: number = Date.now();
     const messageId: string = `${now}-${Math.floor(Math.random() * 1000000)}`;
     const user: MessageRecord = {
-      id: `${messageId}-user`, conversationId, sequence: this.messages.length, role: 'user', content: text.trim(), reasoningContent: '', status: MessageStatus.Completed, errorSummary: '', createdAt: now, updatedAt: now
+      id: `${messageId}-user`, conversationId, sequence: this.messages.length, role: 'user', content: text.trim(), reasoningContent: '', sourceData: '', status: MessageStatus.Completed, errorSummary: '', createdAt: now, updatedAt: now
     };
     const assistant: MessageRecord = {
-      id: `${messageId}-assistant`, conversationId, sequence: this.messages.length + 1, role: 'assistant', content: '', reasoningContent: '', status: MessageStatus.Generating, errorSummary: '', createdAt: now, updatedAt: now, inputTokens: 0, outputTokens: 0, totalTokens: 0
+      id: `${messageId}-assistant`, conversationId, sequence: this.messages.length + 1, role: 'assistant', content: '', reasoningContent: '', sourceData, status: MessageStatus.Generating, errorSummary: '', createdAt: now, updatedAt: now, inputTokens: 0, outputTokens: 0, totalTokens: 0
     };
 
     AppStorage.setOrCreate('chat_live_assistant_id', assistant.id);
@@ -200,6 +200,7 @@ export class ChatViewModel {
             role: assistant.role,
             content: assistant.content,
             reasoningContent: assistant.reasoningContent,
+            sourceData: assistant.sourceData,
             status: assistant.status,
             errorSummary: assistant.errorSummary,
             createdAt: assistant.createdAt,
@@ -240,6 +241,7 @@ export class ChatViewModel {
         role: assistant.role,
         content: assistant.content,
         reasoningContent: assistant.reasoningContent,
+        sourceData: assistant.sourceData,
         status: assistant.status,
         errorSummary: assistant.errorSummary,
         createdAt: assistant.createdAt,

@@ -25,6 +25,7 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.1.0', date: '2026-07-27', items: ['统一设置、提示词、技能、知识库、工具与扩展及关于页的内容基线，修复工具开关触发的页面位置变化。', '联网搜索来源现以可点击卡片显示在回复内，并与摘要一同保存至本地会话和 Markdown 导出。'] },
   { version: '1.0.38', date: '2026-07-27', items: ['将设置、技能、知识库、工具与扩展入口分别改为齿轮、铅笔、书本和扳手 SVG 图标。', '重新校准设置、提示词、技能、工具与扩展及关于页的内容起始位置。'] },
   { version: '1.0.37', date: '2026-07-27', items: ['按页面校准能力中心与关于页的内容起始位置：技能、工具与扩展上移，知识库下移。', '“我的”入口和能力页标题补充主题色 SVG 图标；布局不再因开关展开而改变基线。'] },
   { version: '1.0.36', date: '2026-07-27', items: ['统一“我的”、设置、能力中心与关于页面的内容起始位置，移除不一致的手动位移。', '设置项补充主题色 SVG 图标，并修复知识库选择文件后底部导航栏错误出现的问题。'] },
@@ -77,7 +78,7 @@ export struct MyView {
   @State private heatDetailScale: number = 1;
   @State private showAboutSheet: boolean = false;
   @State private aboutSheetKind: number = 0;
-  @State private expandedChangelogVersion: string = '1.0.38';
+  @State private expandedChangelogVersion: string = '1.1.0';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
@@ -699,7 +700,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
-      .translate({ y: 6 })
+      .translate({ y: THEME_TOKENS.subpageContentOffset })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
@@ -725,7 +726,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
-      .translate({ y: -18 })
+      .translate({ y: THEME_TOKENS.subpageContentOffset })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }

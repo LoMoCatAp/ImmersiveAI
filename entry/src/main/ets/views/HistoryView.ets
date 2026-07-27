@@ -7,6 +7,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { promptAction } from '@kit.ArkUI';
+import { WebSearchResult, WebSearchService } from '../service/WebSearchService';
 
 @Component
 export struct HistoryView {
@@ -14,6 +15,7 @@ export struct HistoryView {
   @State errorMessage: string = '';
   @StorageLink('history_revision') @Watch('onHistoryChanged') private historyRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
+  private readonly webSearchService: WebSearchService = new WebSearchService();
   onOpen: (id: string) => void = (_id: string): void => {};
 
   aboutToAppear(): void {
@@ -67,6 +69,15 @@ export struct HistoryView {
       rows.push(`## ${message.role === 'user' ? '用户' : '助手'}`, '');
       if (message.reasoningContent.length > 0) rows.push('### 思考过程', '', message.reasoningContent, '');
       rows.push(message.content.length > 0 ? message.content : '（无文本内容）', '');
+      const sources: WebSearchResult[] = this.webSearchService.resultsFromSerialized(message.sourceData ?? '');
+      if (sources.length > 0) {
+        rows.push('### 联网来源', '');
+        sources.forEach((source: WebSearchResult, index: number): void => {
+          rows.push(`- [${index + 1}. ${source.title.length > 0 ? source.title : '未命名来源'}](${source.url})`);
+          if (source.snippet.length > 0) rows.push(`  - ${source.snippet}`);
+        });
+        rows.push('');
+      }
     });
     return rows.join('\n');
   }

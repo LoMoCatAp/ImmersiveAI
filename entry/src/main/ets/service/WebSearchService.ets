@@ -76,6 +76,29 @@ export class WebSearchService {
     return lines.join('\n\n');
   }
 
+  serializeResults(results: WebSearchResult[]): string {
+    return JSON.stringify(results.slice(0, this.maxResults));
+  }
+
+  resultsFromSerialized(serialized: string): WebSearchResult[] {
+    if (serialized.trim().length === 0) return [];
+    try {
+      const records: Object[] = JSON.parse(serialized) as Object[];
+      const results: WebSearchResult[] = [];
+      records.forEach((entry: Object): void => {
+        const item: Record<string, Object> = entry as Record<string, Object>;
+        const title: string = String(item['title'] ?? '').trim();
+        const url: string = String(item['url'] ?? '').trim();
+        const snippet: string = String(item['snippet'] ?? '').replace(/\s+/g, ' ').trim();
+        if (!url.startsWith('http')) return;
+        results.push({ title: title.slice(0, 200), url: url.slice(0, 1000), snippet: snippet.slice(0, this.maxSnippetLength) });
+      });
+      return results.slice(0, this.maxResults);
+    } catch (_) {
+      return [];
+    }
+  }
+
   private normalize(endpoint: string, fallback: string, path: string): string {
     const base: string = (endpoint.trim().length > 0 ? endpoint.trim() : fallback).replace(/\/$/, '');
     return base.endsWith(path) ? base : `${base}${path}`;
