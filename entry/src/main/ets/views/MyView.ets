@@ -11,7 +11,7 @@ interface HeatmapCell { day: number; level: number; count: number; tokens: numbe
 interface ChangelogEntry { version: string; date: string; items: string[]; }
 interface PrivacyEntry { title: string; content: string; }
 
-enum MySection { Home = 'home', Settings = 'settings', About = 'about', Privacy = 'privacy' }
+enum MySection { Home = 'home', Settings = 'settings', About = 'about' }
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
@@ -68,6 +68,7 @@ export struct MyView {
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
   @State private showChangelog: boolean = false;
+  @State private showPrivacyPolicy: boolean = false;
   @State private expandedChangelogVersion: string = '1.0.29';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
@@ -287,6 +288,10 @@ export struct MyView {
     setTimeout((): void => { this.changelogContentEntered = true; }, 80);
   }
 
+  private openPrivacyPolicy(): void {
+    this.showPrivacyPolicy = true;
+  }
+
   @Builder
   private changelogSheet(): void {
     Column({ space: 14 }) {
@@ -302,7 +307,7 @@ export struct MyView {
             .fontSize(13)
             .fontColor(THEME_TOKENS.secondaryText);
         }.alignItems(HorizontalAlign.Start).layoutWeight(1);
-      }.width('100%').margin({ top: 28 }).padding(14).backgroundColor(THEME_TOKENS.surface).borderRadius(20);
+      }.width('100%').margin({ top: 48 }).padding(14).backgroundColor(THEME_TOKENS.surface).borderRadius(20);
       Column({ space: 12 }) {
         Text('更新日志').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
         Scroll() {
@@ -527,38 +532,49 @@ export struct MyView {
           }.width('100%').padding(16).onClick((): void => this.openChangelog()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
         }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-        ListItem() { Row() { Column({ space: 3 }) { Text('隐私政策').fontSize(17).fontWeight(FontWeight.Medium); Text('本地数据、第三方服务与权限说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText); }.width('100%').padding(16).onClick((): void => { this.navigateTo(MySection.Privacy); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 }); }
+        ListItem() { Row() { Column({ space: 3 }) { Text('隐私政策').fontSize(17).fontWeight(FontWeight.Medium); Text('本地数据、第三方服务与权限说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText); }.width('100%').padding(16).onClick((): void => { this.openPrivacyPolicy(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 }); }
       }.width('100%').height(302).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
     }.width('100%');
   }
 
   @Builder
-  private privacyContent(): void {
-    Column({ space: 16 }) {
-      this.pageHeader('隐私政策');
+  private privacySheet(): void {
+    Column({ space: 14 }) {
+      Text('').width(36).height(4).borderRadius(2).backgroundColor(THEME_TOKENS.secondaryText).opacity(0.32);
       Scroll() {
-        Column({ space: 10 }) {
-          Column({ space: 4 }) {
-            Text('生效日期').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
-            Text('2026 年 7 月 26 日').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
-          }.padding(16).width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18).alignItems(HorizontalAlign.Start);
+        Column({ space: 16 }) {
+          Column({ space: 6 }) {
+            Text('隐私政策').fontSize(20).fontWeight(FontWeight.Bold).width('100%');
+            Text('生效日期：2026 年 7 月 26 日').fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
+          }.alignItems(HorizontalAlign.Start).width('100%');
+          Divider();
           ForEach(PRIVACY_ENTRIES, (entry: PrivacyEntry): void => {
             Column({ space: 8 }) {
               Text(entry.title).fontSize(16).fontWeight(FontWeight.Medium).width('100%');
               Text(entry.content).fontSize(15).lineHeight(22).fontColor(THEME_TOKENS.primaryText).width('100%');
-            }.padding(16).width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(18).alignItems(HorizontalAlign.Start);
+            }.alignItems(HorizontalAlign.Start).width('100%');
           }, (entry: PrivacyEntry): string => entry.title);
-        }.width('100%');
-      }.layoutWeight(1).width('100%').scrollBar(BarState.Auto).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
-    }.width('100%').height('100%');
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(18)
+        .backgroundColor(THEME_TOKENS.surface)
+        .borderRadius(22);
+      }
+      .width('100%')
+      .height(400)
+      .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+    }
+    .width('100%')
+    .padding({ left: 20, right: 20, top: 44, bottom: 20 });
   }
 
   build() {
     Column() {
       if (this.section === MySection.Home) this.homeContent();
       else if (this.section === MySection.Settings) this.settingsContent();
-      else if (this.section === MySection.About) this.aboutContent();
-      else this.privacyContent();
+      else this.aboutContent();
     }
     .width('100%')
     .height('100%')
@@ -572,6 +588,14 @@ export struct MyView {
       dragBar: false,
       scrollSizeMode: ScrollSizeMode.CONTINUOUS,
       onWillDismiss: (): void => { this.changelogContentEntered = false; this.showChangelog = false; }
+    })
+    .bindSheet($$this.showPrivacyPolicy, this.privacySheet(), {
+      detents: [SheetSize.FIT_CONTENT],
+      preferType: SheetType.BOTTOM,
+      showClose: true,
+      dragBar: false,
+      scrollSizeMode: ScrollSizeMode.CONTINUOUS,
+      onWillDismiss: (): void => { this.showPrivacyPolicy = false; }
     });
   }
 }
