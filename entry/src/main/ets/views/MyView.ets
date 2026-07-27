@@ -8,11 +8,19 @@ import { common } from '@kit.AbilityKit';
 
 interface AppearanceOption { value: string; label: string; }
 interface HeatmapCell { day: number; level: number; count: number; tokens: number; }
+interface ChangelogEntry { version: string; date: string; items: string[]; }
 
 enum MySection { Home = 'home', Settings = 'settings', About = 'about', Privacy = 'privacy' }
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
+const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.24', date: '2026-07-27', items: ['新增关于页更新日志，可查看各版本功能变化。', '更新日志使用原生 ArkUI 底部弹窗呈现。'] },
+  { version: '1.0.23', date: '2026-07-27', items: ['支持将对话记录导出为 Markdown 文件。', '服务商模型支持自动选择与手动刷新可用列表。', '优化兼容服务商的连接测试。'] },
+  { version: '1.0.22', date: '2026-07-26', items: ['统一页面边距，并优化平板与大屏显示。', '调整对话、服务商和我的页面的响应式布局。'] },
+  { version: '1.0.21', date: '2026-07-26', items: ['优化首次使用引导的恢复流程与页面同步。', '改善我的页面、设置和关于页面的导航动画。'] },
+  { version: '1.0.20', date: '2026-07-25', items: ['完善服务商配置引导与本地隐私说明。', '持续优化对话流式输出、模型切换与历史记录体验。'] }
+];
 const COLOR_MODE_OPTIONS: AppearanceOption[] = [
   { value: 'system', label: '跟随系统' }, { value: 'light', label: '浅色' }, { value: 'dark', label: '深色' }
 ];
@@ -46,6 +54,8 @@ export struct MyView {
   @State private contentOffset: number = 0;
   @State private contentAnimationDuration: number = 0;
   @State private isNavigating: boolean = false;
+  @State private showChangelog: boolean = false;
+  @State private expandedChangelogVersion: string = '1.0.24';
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
@@ -256,6 +266,70 @@ export struct MyView {
     void context.startAbility({ action: 'ohos.want.action.viewData', uri: 'https://github.com/LoMoCatAp/ImmersiveAI' });
   }
 
+  private openChangelog(): void {
+    this.expandedChangelogVersion = CHANGELOG_ENTRIES[0].version;
+    this.showChangelog = true;
+  }
+
+  @Builder
+  private changelogSheet(): void {
+    Column({ space: 14 }) {
+      Row({ space: 12 }) {
+        Image($r('app.media.layered_image'))
+          .width(52)
+          .height(52)
+          .borderRadius(14)
+          .objectFit(ImageFit.Cover);
+        Column({ space: 4 }) {
+          Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold);
+          Text(`当前版本 v${this.appVersion.length > 0 ? this.appVersion : CHANGELOG_ENTRIES[0].version}`)
+            .fontSize(13)
+            .fontColor(THEME_TOKENS.secondaryText);
+        }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+      }.width('100%');
+      Text('更新日志').fontSize(16).fontWeight(FontWeight.Medium).width('100%');
+      List({ space: 0 }) {
+        ForEach(CHANGELOG_ENTRIES, (entry: ChangelogEntry): void => {
+          ListItem() {
+            Column({ space: 0 }) {
+              Row({ space: 10 }) {
+                Column({ space: 3 }) {
+                  Text(`v${entry.version}`).fontSize(17).fontWeight(FontWeight.Medium);
+                  Text(entry.date).fontSize(12).fontColor(THEME_TOKENS.secondaryText);
+                }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+                Text(this.expandedChangelogVersion === entry.version ? '⌃' : '›')
+                  .fontSize(22)
+                  .fontColor(THEME_TOKENS.secondaryText);
+              }
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+              .onClick((): void => {
+                this.expandedChangelogVersion = this.expandedChangelogVersion === entry.version ? '' : entry.version;
+              })
+              .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 });
+              if (this.expandedChangelogVersion === entry.version) {
+                Column({ space: 8 }) {
+                  ForEach(entry.items, (item: string): void => {
+                    Text(`• ${item}`).fontSize(14).lineHeight(21).fontColor(THEME_TOKENS.secondaryText).width('100%');
+                  }, (item: string): string => item);
+                }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 16, right: 16, bottom: 16 });
+              }
+            }.width('100%');
+          }
+          ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+        }, (entry: ChangelogEntry): string => entry.version);
+      }
+      .width('100%')
+      .height(380)
+      .backgroundColor(THEME_TOKENS.surface)
+      .borderRadius(18)
+      .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+    }
+    .width('100%')
+    .padding({ left: 20, right: 20, top: 8, bottom: 20 });
+  }
+
   @Builder
   private pageHeader(title: string): void {
     Row({ space: 10 }) {
@@ -420,8 +494,18 @@ export struct MyView {
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() { Row() { Text('GitHub').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('github.com/LoMoCatAp/ImmersiveAI').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openGitHub()); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+        ListItem() {
+          Row() {
+            Column({ space: 3 }) {
+              Text('更新日志').fontSize(17).fontWeight(FontWeight.Medium);
+              Text('查看各版本功能变化').fontSize(13).fontColor(THEME_TOKENS.secondaryText);
+            }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+            Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
+          }.width('100%').padding(16).onClick((): void => this.openChangelog()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
+        }
+        ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() { Row() { Column({ space: 3 }) { Text('隐私政策').fontSize(17).fontWeight(FontWeight.Medium); Text('本地数据、第三方服务与权限说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText); }.width('100%').padding(16).onClick((): void => { this.navigateTo(MySection.Privacy); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 }); }
-      }.width('100%').height(230).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+      }.width('100%').height(302).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
     }.width('100%');
   }
 
@@ -451,6 +535,12 @@ export struct MyView {
     .height('100%')
     .padding({ left: this.pagePadding, right: this.pagePadding, top: 28, bottom: 132 })
     .translate({ x: this.contentOffset })
-    .animation({ duration: this.contentAnimationDuration, curve: Curve.EaseOut });
+    .animation({ duration: this.contentAnimationDuration, curve: Curve.EaseOut })
+    .bindSheet($$this.showChangelog, this.changelogSheet(), {
+      detents: [SheetSize.FIT_CONTENT],
+      preferType: SheetType.BOTTOM,
+      showClose: true,
+      onWillDismiss: (): void => { this.showChangelog = false; }
+    });
   }
 }
