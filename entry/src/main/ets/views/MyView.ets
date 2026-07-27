@@ -24,6 +24,7 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.32', date: '2026-07-27', items: ['修正子页面标题栏的滚动显隐方向，并调整“我的”与关于页内容位置。', '进入设置或关于时，底部 HDS 导航栏会以点击场景动画收缩隐藏。'] },
   { version: '1.0.31', date: '2026-07-27', items: ['设置与关于接入沉浸光感标题栏，支持材质渐变模糊与滚动动态隐藏。', '上移关于页内容，优化子页面的信息起始位置。'] },
   { version: '1.0.30', date: '2026-07-27', items: ['“我的”页设置与关于改用 ArkUI 原生 Navigation 返回栏与侧滑返回。'] },
   { version: '1.0.29', date: '2026-07-27', items: ['隐私政策改为独立信息卡片布局。'] },
@@ -69,7 +70,7 @@ export struct MyView {
   @State private heatDetailScale: number = 1;
   @State private showAboutSheet: boolean = false;
   @State private aboutSheetKind: number = 0;
-  @State private expandedChangelogVersion: string = '1.0.31';
+  @State private expandedChangelogVersion: string = '1.0.32';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
@@ -616,7 +617,7 @@ export struct MyView {
     return {
       hideTitleArea: true,
       hideStatusBar: true,
-      mode: HideMode.SCROLL_UP_TO_BLEND_SCROLL_UP,
+      mode: HideMode.SCROLL_UP,
       hideRatio: 1
     };
   }
@@ -634,6 +635,7 @@ export struct MyView {
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
     .titleBar(this.immersiveTitleBar('设置'))
+    .hideTitleBar(false)
     .dynamicHideTitleBar(this.dynamicTitleBar())
     .bindToScrollable([this.settingsScroller])
     .hideBackButton(false)
@@ -653,10 +655,12 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
+      .translate({ y: -12 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
     .titleBar(this.immersiveTitleBar('关于'))
+    .hideTitleBar(false)
     .dynamicHideTitleBar(this.dynamicTitleBar())
     .bindToScrollable([this.aboutScroller])
     .hideBackButton(false)
@@ -680,7 +684,7 @@ export struct MyView {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: this.pagePadding, right: this.pagePadding, top: 28, bottom: 132 })
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 20, bottom: 132 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }

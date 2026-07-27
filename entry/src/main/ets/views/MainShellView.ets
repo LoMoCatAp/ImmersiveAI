@@ -1,4 +1,4 @@
-import { HdsTabs, HdsTabsController, hdsMaterial, DividerMode } from '@kit.UIDesignKit';
+import { HdsAnimationMode, HdsTabs, HdsTabsController, hdsMaterial, DividerMode } from '@kit.UIDesignKit';
 import { CustomTheme } from '@kit.ArkUI';
 import { ChatView } from './ChatView';
 import { HistoryView } from './HistoryView';
@@ -25,6 +25,7 @@ export struct MainShellView {
   @StorageLink('onboarding_provider_setup_revision') @Watch('onOnboardingProviderSetupRequested') private onboardingProviderSetupRevision: number = 0;
   @StorageLink('onboarding_chat_request_revision') @Watch('onOnboardingChatRequested') private onboardingChatRequestRevision: number = 0;
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
+  @StorageLink('my_section') @Watch('onMySectionChanged') private mySection: string = 'home';
   @State private materialLevel: MaterialLevel = MaterialLevel.Gentle;
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
@@ -48,6 +49,7 @@ export struct MainShellView {
     this.tabsController.bindScroller(2, this.providerScroller);
     this.resumeOnboardingFlow();
     this.syncHdsTabAfterInitialBuild();
+    this.syncTabsBarVisibility();
   }
 
   private syncHdsTabAfterInitialBuild(): void {
@@ -62,6 +64,20 @@ export struct MainShellView {
     this.selectedTab = AppStore.shellViewModel.state.selectedTab;
     AppStorage.set('shell_selected_tab', this.selectedTab);
     if (this.material === ShellMaterialMode.VerifiedOfficial) this.tabsController.changeIndex(this.selectedTab);
+    this.syncTabsBarVisibility();
+  }
+
+  private onMySectionChanged(): void {
+    this.syncTabsBarVisibility();
+  }
+
+  private syncTabsBarVisibility(): void {
+    if (this.material !== ShellMaterialMode.VerifiedOfficial) return;
+    if (this.selectedTab === ShellTab.My && this.mySection !== 'home') {
+      this.tabsController.applyHideAnimation(HdsAnimationMode.CLICK_ANIMATION);
+      return;
+    }
+    this.tabsController.applyShowAnimation(HdsAnimationMode.CLICK_ANIMATION);
   }
 
   private async openHistory(id: string): Promise<void> {
