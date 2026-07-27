@@ -10,31 +10,44 @@ export struct ChatComposer {
   onSend: (text: string) => void = (_text: string): void => {};
   onStop: () => void = (): void => {};
   onMore: () => void = (): void => {};
-  onPickAttachment: () => void = (): void => {};
+  onOpenAttachmentMenu: () => void = (): void => {};
   onToggleWebSearch: () => void = (): void => {};
   build() {
-    Column({ space: 8 }) {
-      Row() {
-        Row({ space: 8 }) {
-          Button('导入文件').onClick(this.onPickAttachment).height(32).fontSize(13).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
-          if (this.webSearchSupported) {
-            Button('联网搜索')
-              .onClick(this.onToggleWebSearch)
-              .height(32)
-              .fontSize(13)
-              .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
-              .backgroundColor(this.webSearchEnabled ? THEME_TOKENS.primary : THEME_TOKENS.surface)
-              .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
-          }
+    Column({ space: 6 }) {
+      Row({ space: 8 }) {
+        Button('导入文件')
+          .onClick(this.onOpenAttachmentMenu)
+          .height(32)
+          .fontSize(13)
+          .backgroundColor(THEME_TOKENS.surface)
+          .fontColor(THEME_TOKENS.primary)
+          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+        Button('更多')
+          .onClick(this.onMore)
+          .height(32)
+          .fontSize(13)
+          .backgroundColor(THEME_TOKENS.surface)
+          .fontColor(THEME_TOKENS.primary)
+          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
+        if (this.webSearchSupported) {
+          Button('联网搜索')
+            .onClick(this.onToggleWebSearch)
+            .height(32)
+            .fontSize(13)
+            .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
+            .backgroundColor(this.webSearchEnabled ? THEME_TOKENS.primary : THEME_TOKENS.surface)
+            .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         }
       }.width('100%');
     Row({ space: 8 }) {
-       TextInput({ placeholder: '输入消息', text: this.inputText }).layoutWeight(1).onChange((value: string): void => { this.inputText = value; });
+       TextInput({ placeholder: '输入消息', text: this.inputText }).layoutWeight(1).height(44).onChange((value: string): void => { this.inputText = value; });
       if (this.isGenerating) {
-         Button('停止生成').onClick(this.onStop).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+        Button() { Image($r('app.media.chat_close')).width(20).height(20).fillColor(THEME_TOKENS.primary); }
+          .onClick(this.onStop).width(44).height(44).backgroundColor(THEME_TOKENS.surface).borderRadius(22).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
       } else {
-          Button('发送').onClick((): void => { const value: string = this.inputText.trim(); if (value.length > 0 || this.hasAttachment) { this.onSend(value); this.inputText = ''; } }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
-         Button('更多').onClick(this.onMore).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+        Button() { Image($r('app.media.chat_send')).width(21).height(21).fillColor(THEME_TOKENS.primary); }
+          .onClick((): void => { const value: string = this.inputText.trim(); if (value.length > 0 || this.hasAttachment) { this.onSend(value); this.inputText = ''; } })
+          .width(44).height(44).backgroundColor(THEME_TOKENS.surface).borderRadius(22).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
       }
       }.width('100%');
     }.padding(12).width('100%');

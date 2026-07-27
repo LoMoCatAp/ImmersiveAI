@@ -30,6 +30,7 @@ export struct MainShellView {
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @StorageLink('appearance_page_background') private appearancePageBackground: string = '';
+  @State private hdsBarHiddenBySubPage: boolean = false;
   private material: ShellMaterialMode = ShellMaterialMode.Fallback;
   private materialReason: string = '正在检测沉浸光感能力';
 
@@ -72,12 +73,24 @@ export struct MainShellView {
   }
 
   private syncTabsBarVisibility(): void {
+    this.setTabsBarVisibility(this.selectedTab === ShellTab.My && this.mySection !== 'home');
+  }
+
+  private setTabsBarVisibility(hidden: boolean): void {
     if (this.material !== ShellMaterialMode.VerifiedOfficial) return;
-    if (this.selectedTab === ShellTab.My && this.mySection !== 'home') {
-      this.tabsController.applyHideAnimation(HdsAnimationMode.CLICK_ANIMATION);
+    // Avoid re-running the HDS animation when users only switch tab items.
+    // The bar transitions exclusively when a My subpage opens or closes.
+    if (this.hdsBarHiddenBySubPage === hidden) return;
+    this.hdsBarHiddenBySubPage = hidden;
+    if (hidden) {
+      this.tabsController.applyHideAnimation(HdsAnimationMode.SCROLL_ANIMATION);
       return;
     }
-    this.tabsController.applyShowAnimation(HdsAnimationMode.CLICK_ANIMATION);
+    this.tabsController.applyShowAnimation(HdsAnimationMode.SCROLL_ANIMATION);
+  }
+
+  private setMySubPageVisible(active: boolean): void {
+    this.setTabsBarVisibility(active);
   }
 
   private async openHistory(id: string): Promise<void> {
@@ -147,13 +160,19 @@ export struct MainShellView {
 
   @Builder
   private tabLabel(label: string, tab: ShellTab): void {
-    Text(label)
+    Column({ space: 2 }) {
+      if (tab === ShellTab.Chat) Image($r('app.media.nav_chat')).width(20).height(20).fillColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'));
+      else if (tab === ShellTab.History) Image($r('app.media.nav_history')).width(20).height(20).fillColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'));
+      else if (tab === ShellTab.Providers) Image($r('app.media.nav_provider')).width(20).height(20).fillColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'));
+      else Image($r('app.media.nav_my')).width(20).height(20).fillColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'));
+      Text(label)
+        .fontSize(12)
+        .fontColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'));
+    }
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
       .width('100%')
-      .height(48)
-      .textAlign(TextAlign.Center)
-      .fontSize(14)
-      .fontColor(this.selectedTab === tab ? this.appearanceAccentColor : $r('app.color.text_secondary'))
-      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 })
+      .height(52)
       .backgroundColor('#00000000');
   }
 
@@ -163,7 +182,7 @@ export struct MainShellView {
       TabContent() { ChatView({ onNavigate: (intent: NavigationIntent): void => { this.navigate(intent); } }) }.tabBar(this.tabLabel('聊天', ShellTab.Chat))
       TabContent() { HistoryView({ onOpen: (id: string): void => { void this.openHistory(id); } }) }.tabBar(this.tabLabel('历史', ShellTab.History))
        TabContent() { Scroll(this.providerScroller) { ProviderSettingsView({ onReturnChat: (): void => { this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() }); } }) }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true }).width('100%').height('100%') }.tabBar(this.tabLabel('供应商', ShellTab.Providers))
-      TabContent() { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } }) }.tabBar(this.tabLabel('我的', ShellTab.My))
+      TabContent() { MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); }, onSubPageChanged: (active: boolean): void => { this.setMySubPageVisible(active); } }) }.tabBar(this.tabLabel('我的', ShellTab.My))
     }
     .barOverlap(true)
     .vertical(false)
@@ -192,7 +211,7 @@ export struct MainShellView {
           if (this.selectedTab === ShellTab.Chat) ChatView({ onNavigate: (intent: NavigationIntent): void => { this.navigate(intent); } });
           else if (this.selectedTab === ShellTab.History) HistoryView({ onOpen: (id: string): void => { void this.openHistory(id); } });
           else if (this.selectedTab === ShellTab.Providers) Scroll(this.providerScroller) { ProviderSettingsView({ onReturnChat: (): void => { this.navigate({ target: ShellTab.Chat, source: NavigationSource.System, requestId: Date.now() }); } }) }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true }).width('100%').height('100%');
-          else MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); } });
+          else MyView({ onMaterialChanged: (level: MaterialLevel): void => { this.applyMaterial(level); }, onAppearanceChanged: (mode: string, accent: string): void => { this.applyAppearance(mode, accent); }, onSubPageChanged: (active: boolean): void => { this.setMySubPageVisible(active); } });
         }
         .layoutWeight(1)
         .width('100%');

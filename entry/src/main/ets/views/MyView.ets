@@ -4,6 +4,7 @@ import { MaterialLevel, MaterialOption } from '../model/ShellModels';
 import { ConversationRecord } from '../model/ChatModels';
 import { SystemBarAppearance } from '../common/SystemBarAppearance';
 import { FirstLaunchDetector } from '../common/FirstLaunchDetector';
+import { CapabilityCenterView } from './CapabilityCenterView';
 import { common } from '@kit.AbilityKit';
 import { hdsMaterial, DynamicHideParams, HdsNavigation, HdsNavigationTitleBarOptions, HdsNavDestination, HideMode, ScrollEffectType } from '@kit.UIDesignKit';
 
@@ -12,7 +13,7 @@ interface HeatmapCell { day: number; level: number; count: number; tokens: numbe
 interface ChangelogEntry { version: string; date: string; items: string[]; }
 interface PrivacyEntry { title: string; content: string; }
 
-enum MySection { Home = 'home', Settings = 'settings', About = 'about' }
+enum MySection { Home = 'home', Settings = 'settings', Prompt = 'prompt', Skills = 'skills', Knowledge = 'knowledge', Tools = 'tools', About = 'about' }
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
@@ -24,6 +25,12 @@ const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '政策更新', content: '本政策可能随功能和适用法律变化更新。继续使用应用即表示您理解第三方服务商可能处理您主动发送的数据。' }
 ];
 const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  { version: '1.0.38', date: '2026-07-27', items: ['将设置、技能、知识库、工具与扩展入口分别改为齿轮、铅笔、书本和扳手 SVG 图标。', '重新校准设置、提示词、技能、工具与扩展及关于页的内容起始位置。'] },
+  { version: '1.0.37', date: '2026-07-27', items: ['按页面校准能力中心与关于页的内容起始位置：技能、工具与扩展上移，知识库下移。', '“我的”入口和能力页标题补充主题色 SVG 图标；布局不再因开关展开而改变基线。'] },
+  { version: '1.0.36', date: '2026-07-27', items: ['统一“我的”、设置、能力中心与关于页面的内容起始位置，移除不一致的手动位移。', '设置项补充主题色 SVG 图标，并修复知识库选择文件后底部导航栏错误出现的问题。'] },
+  { version: '1.0.35', date: '2026-07-27', items: ['知识库支持添加本地笔记与导入文本文件；资料保存在设备本地。', '对话会根据当前问题筛选相关知识库片段，减少无关上下文占用。'] },
+  { version: '1.0.34', date: '2026-07-27', items: ['新增可实际用于对话的外部联网搜索：支持 SearXNG、Tavily、Exa 与博查，并在请求中附带带编号的参考资料。', '工具与扩展增加搜索连通性测试；明确标注尚处于配置阶段的 MCP 与图像生成能力。'] },
+  { version: '1.0.33', date: '2026-07-27', items: ['修复沉浸标题栏初始状态，并优化“我的”与关于页内容位置。', '子页面与底部导航栏改为直接联动，确保点击进入和返回时播放收缩、恢复动画。'] },
   { version: '1.0.32', date: '2026-07-27', items: ['修正子页面标题栏的滚动显隐方向，并调整“我的”与关于页内容位置。', '进入设置或关于时，底部 HDS 导航栏会以点击场景动画收缩隐藏。'] },
   { version: '1.0.31', date: '2026-07-27', items: ['设置与关于接入沉浸光感标题栏，支持材质渐变模糊与滚动动态隐藏。', '上移关于页内容，优化子页面的信息起始位置。'] },
   { version: '1.0.30', date: '2026-07-27', items: ['“我的”页设置与关于改用 ArkUI 原生 Navigation 返回栏与侧滑返回。'] },
@@ -70,10 +77,11 @@ export struct MyView {
   @State private heatDetailScale: number = 1;
   @State private showAboutSheet: boolean = false;
   @State private aboutSheetKind: number = 0;
-  @State private expandedChangelogVersion: string = '1.0.32';
+  @State private expandedChangelogVersion: string = '1.0.38';
   @State private changelogContentEntered: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
+  @StorageLink('knowledge_file_picker_active') private knowledgeFilePickerActive: boolean = false;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   private pageStack: NavPathStack = new NavPathStack();
   private homeScroller: Scroller = new Scroller();
@@ -81,6 +89,7 @@ export struct MyView {
   private aboutScroller: Scroller = new Scroller();
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
+  onSubPageChanged: (active: boolean) => void = (_active: boolean): void => {};
 
   aboutToAppear(): void {
     if (this.section === MySection.Home) {
@@ -224,7 +233,8 @@ export struct MyView {
     this.section = next;
     AppStorage.setOrCreate('my_section', next);
     AppStorage.set('my_section', next);
-    this.pageStack.pushPathByName(next === MySection.Settings ? 'settings' : 'about', false);
+    this.pageStack.pushPathByName(next as string, false);
+    this.onSubPageChanged(true);
   }
 
   private returnToHome(): void {
@@ -233,13 +243,18 @@ export struct MyView {
     AppStorage.setOrCreate('my_section', MySection.Home);
     AppStorage.set('my_section', MySection.Home);
     this.pageStack.pop();
+    this.onSubPageChanged(false);
   }
 
   private onDestinationDisappear(section: MySection): void {
+    // The document picker temporarily backgrounds the destination. That is
+    // not a navigation pop, so the HDS tab bar must remain hidden.
+    if (section === MySection.Knowledge && this.knowledgeFilePickerActive) return;
     if (this.section !== section) return;
     this.section = MySection.Home;
     AppStorage.setOrCreate('my_section', MySection.Home);
     AppStorage.set('my_section', MySection.Home);
+    this.onSubPageChanged(false);
   }
 
   private labels(options: AppearanceOption[]): string[] { return options.map((option: AppearanceOption): string => option.label); }
@@ -461,6 +476,7 @@ export struct MyView {
     List({ space: 0 }) {
       ListItem() {
         Row({ space: 12 }) {
+          Image($r('app.media.my_settings')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('设置').fontSize(17).fontWeight(FontWeight.Medium); Text('外观、聊天与沉浸光感').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Settings); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -468,32 +484,65 @@ export struct MyView {
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
+          Image($r('app.media.my_prompt')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Column({ space: 3 }) { Text('提示词与记忆').fontSize(17).fontWeight(FontWeight.Medium); Text('默认指令、长期偏好与本地记忆').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Prompt); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
+      }
+      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+      ListItem() {
+        Row({ space: 12 }) {
+          Image($r('app.media.my_skills')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Column({ space: 3 }) { Text('技能').fontSize(17).fontWeight(FontWeight.Medium); Text('写作、编程、学习与自定义工作流').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Skills); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
+      }
+      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+      ListItem() {
+        Row({ space: 12 }) {
+          Image($r('app.media.my_knowledge')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Column({ space: 3 }) { Text('知识库').fontSize(17).fontWeight(FontWeight.Medium); Text('本地资料摘要与对话参考内容').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Knowledge); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
+      }
+      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+      ListItem() {
+        Row({ space: 12 }) {
+          Image($r('app.media.my_tools')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Column({ space: 3 }) { Text('工具与扩展').fontSize(17).fontWeight(FontWeight.Medium); Text('MCP 服务、联网搜索与图像生成配置').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Tools); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
+      }
+      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
+      ListItem() {
+        Row({ space: 12 }) {
+          Image($r('app.media.my_about')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('关于').fontSize(17).fontWeight(FontWeight.Medium); Text('AIBox、版本与项目地址').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.About); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
-    }.width('100%').height(132).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+    }.width('100%').height(408).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private appearanceList(): void {
     List({ space: 0 }) {
-      ListItem() { Row({ space: 12 }) { Text('主题色').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(ACCENT_OPTIONS)).selected(this.optionIndex(ACCENT_OPTIONS, this.accentColor)).value(this.labels(ACCENT_OPTIONS)[this.optionIndex(ACCENT_OPTIONS, this.accentColor)]).onSelect((index: number): void => this.selectAccent(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
+      ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_theme')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('主题色').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(ACCENT_OPTIONS)).selected(this.optionIndex(ACCENT_OPTIONS, this.accentColor)).value(this.labels(ACCENT_OPTIONS)[this.optionIndex(ACCENT_OPTIONS, this.accentColor)]).onSelect((index: number): void => this.selectAccent(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-      ListItem() { Row({ space: 12 }) { Text('显示模式').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(COLOR_MODE_OPTIONS)).selected(this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)).value(this.labels(COLOR_MODE_OPTIONS)[this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)]).onSelect((index: number): void => this.selectColorMode(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
+      ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_display')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('显示模式').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(COLOR_MODE_OPTIONS)).selected(this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)).value(this.labels(COLOR_MODE_OPTIONS)[this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)]).onSelect((index: number): void => this.selectColorMode(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
     }.width('100%').height(112).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private chatAppearanceList(): void {
     List({ space: 0 }) {
-      ListItem() { Column({ space: 6 }) { Row() { Text('聊天字号').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text(`${this.chatTextSize} vp`).fontColor(THEME_TOKENS.secondaryText); }.width('100%'); Slider({ value: this.chatTextSize, min: 12, max: 22, step: 1, style: SliderStyle.OutSet }).onChange((value: number): void => this.saveTextSize(value)).width('100%'); }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }); }
+      ListItem() { Column({ space: 6 }) { Row({ space: 12 }) { Image($r('app.media.setting_chat')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('聊天字号').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text(`${this.chatTextSize} vp`).fontColor(THEME_TOKENS.secondaryText); }.width('100%'); Slider({ value: this.chatTextSize, min: 12, max: 22, step: 1, style: SliderStyle.OutSet }).onChange((value: number): void => this.saveTextSize(value)).width('100%'); }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }); }
     }.width('100%').height(88).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private materialList(): void {
-    List({ space: 0 }) { ListItem() { Row({ space: 12 }) { Text('档位').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.materialLabels().map((label: string): SelectOption => ({ value: label }))).selected(this.materialIndex()).value(this.summary).onSelect((index: number): void => this.selectMaterial(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); } }.width('100%').height(56).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+    List({ space: 0 }) { ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_material')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('档位').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.materialLabels().map((label: string): SelectOption => ({ value: label }))).selected(this.materialIndex()).value(this.summary).onSelect((index: number): void => this.selectMaterial(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); } }.width('100%').height(56).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -501,6 +550,7 @@ export struct MyView {
     List({ space: 0 }) {
       ListItem() {
         Row({ space: 12 }) {
+          Image($r('app.media.setting_guide')).width(20).height(20).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('使用引导').fontSize(17).fontWeight(FontWeight.Medium); Text('重新查看服务商配置与隐私说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.openOnboarding(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -605,6 +655,21 @@ export struct MyView {
           enableScrollEffect: true,
           scrollEffectType: ScrollEffectType.IMMERSIVE_GRADIENT_BLUR
         },
+        // HDS defaults to a light foreground in the fully transparent
+        // immersive state. Explicit token colors keep the native title and
+        // back button readable before the content has been scrolled.
+        originalStyle: {
+          contentStyle: {
+            titleStyle: { mainTitleColor: THEME_TOKENS.primaryText },
+            backIconStyle: { iconColor: THEME_TOKENS.primaryText }
+          }
+        },
+        scrollEffectStyle: {
+          contentStyle: {
+            titleStyle: { mainTitleColor: THEME_TOKENS.primaryText },
+            backIconStyle: { iconColor: THEME_TOKENS.primaryText }
+          }
+        },
         systemMaterialEffect: {
           materialType: hdsMaterial.MaterialType.ADAPTIVE,
           materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
@@ -617,8 +682,11 @@ export struct MyView {
     return {
       hideTitleArea: true,
       hideStatusBar: true,
-      mode: HideMode.SCROLL_UP,
-      hideRatio: 1
+      // Keep the destination title visible at rest. It starts to hide only
+      // after the content has a meaningful upward scroll distance.
+      mode: HideMode.SCROLL_UP_TO,
+      hideOffset: 48,
+      hideRatio: 2
     };
   }
 
@@ -630,7 +698,8 @@ export struct MyView {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: this.pagePadding, right: this.pagePadding, top: 8, bottom: 132 })
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
+      .translate({ y: 6 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
@@ -640,8 +709,9 @@ export struct MyView {
     .bindToScrollable([this.settingsScroller])
     .hideBackButton(false)
     .onBackPressed((): boolean => {
-      this.returnToHome();
-      return true;
+      // Keep the native back button and side-swipe in one Navigation path.
+      // onHidden synchronizes the page state after the destination pops.
+      return false;
     })
     .onHidden((): void => this.onDestinationDisappear(MySection.Settings));
   }
@@ -655,7 +725,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
-      .translate({ y: -12 })
+      .translate({ y: -18 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
@@ -665,15 +735,30 @@ export struct MyView {
     .bindToScrollable([this.aboutScroller])
     .hideBackButton(false)
     .onBackPressed((): boolean => {
-      this.returnToHome();
-      return true;
+      return false;
     })
     .onHidden((): void => this.onDestinationDisappear(MySection.About));
   }
 
   @Builder
+  private capabilityDestination(section: MySection, title: string, page: string): void {
+    HdsNavDestination() {
+      CapabilityCenterView({ page: page });
+    }
+    .titleBar(this.immersiveTitleBar(title))
+    .hideTitleBar(false)
+    .hideBackButton(false)
+    .onBackPressed((): boolean => false)
+    .onHidden((): void => this.onDestinationDisappear(section));
+  }
+
+  @Builder
   private myDestinations(name: string): void {
     if (name === 'settings') this.settingsDestination();
+    else if (name === 'prompt') this.capabilityDestination(MySection.Prompt, '提示词与记忆', 'prompt');
+    else if (name === 'skills') this.capabilityDestination(MySection.Skills, '技能', 'skills');
+    else if (name === 'knowledge') this.capabilityDestination(MySection.Knowledge, '知识库', 'knowledge');
+    else if (name === 'tools') this.capabilityDestination(MySection.Tools, '工具与扩展', 'tools');
     else if (name === 'about') this.aboutDestination();
   }
 
@@ -684,11 +769,13 @@ export struct MyView {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: this.pagePadding, right: this.pagePadding, top: 20, bottom: 132 })
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: 0, bottom: 132 })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
     .mode(NavigationMode.Stack)
+    // The root destination has no title. Hide only its title bar so the
+    // nested HdsTabs content remains laid out normally.
     .hideTitleBar(true)
     .hideToolBar(true)
     .navDestination(this.myDestinations)

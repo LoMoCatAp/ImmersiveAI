@@ -20,6 +20,7 @@ import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { OnboardingStepBanner } from '../components/OnboardingStepBanner';
+import { WebSearchConfiguration, WebSearchProvider, WebSearchResponse, WebSearchService } from '../service/WebSearchService';
 
 @Component
 export struct ChatView {
@@ -31,7 +32,6 @@ export struct ChatView {
   @State conversationId: string = '';
   @State selectedProviderId: string = '';
   @State modelOverride: string = '';
-  @State systemPrompt: string = '';
   @State contextCount: string = '16';
   @State webSearchEnabled: boolean = false;
   @State showMore: boolean = false;
@@ -45,7 +45,9 @@ export struct ChatView {
   @State attachmentUri: string = '';
   @State attachmentName: string = '';
   @State attachmentContent: string = '';
+  @State private preparingSearch: boolean = false;
   private readonly attachmentCharacterLimit: number = 50000;
+  private readonly webSearchService: WebSearchService = new WebSearchService();
   @StorageLink('appearance_chat_text_size') private chatTextSize: string = '16';
   @StorageLink('provider_revision') @Watch('onProviderRevisionChanged') private providerRevision: number = 0;
   @StorageLink('chat_provider_selection_revision') @Watch('onProviderSelectionChanged') private providerSelectionRevision: number = 0;
@@ -235,21 +237,58 @@ export struct ChatView {
   }
 
   private supportsWebSearch(): boolean {
+    return this.nativeWebSearchAvailable() || this.externalWebSearchAvailable();
+  }
+
+  private nativeWebSearchAvailable(): boolean {
     const provider: ProviderRecord | undefined = this.selectedProvider();
     return provider !== undefined && ProviderRegistry.supportsWebSearch(provider);
+  }
+
+  private configuredSearchProvider(): WebSearchProvider {
+    const value: number = Number(AppStore.readAppearance('capability_web_search_provider', '0'));
+    if (value === WebSearchProvider.SearXNG || value === WebSearchProvider.Tavily || value === WebSearchProvider.Exa || value === WebSearchProvider.Bocha) return value as WebSearchProvider;
+    return WebSearchProvider.Native;
+  }
+
+  private externalWebSearchAvailable(): boolean {
+    if (AppStore.readAppearance('capability_web_search_enabled', 'false') !== 'true') return false;
+    const provider: WebSearchProvider = this.configuredSearchProvider();
+    if (!this.webSearchService.isExternalProvider(provider)) return false;
+    if (provider !== WebSearchProvider.SearXNG) return true;
+    return AppStore.readAppearance('capability_web_search_endpoint', '').trim().length > 0;
+  }
+
+  private usesExternalWebSearch(): boolean {
+    return this.externalWebSearchAvailable();
   }
 
   private toggleWebSearch(): void {
     if (!this.supportsWebSearch()) {
       this.webSearchEnabled = false;
-      this.showToast('当前模型不支持原生联网搜索');
+      this.showToast('当前模型不支持原生搜索，且尚未完成外部搜索配置。');
       return;
     }
     this.webSearchEnabled = !this.webSearchEnabled;
     AppStore.saveAppearance('chat_web_search_enabled', this.webSearchEnabled ? 'true' : 'false');
   }
 
+  private async externalSearchContext(query: string): Promise<string> {
+    const provider: WebSearchProvider = this.configuredSearchProvider();
+    const endpoint: string = AppStore.readAppearance('capability_web_search_endpoint', '');
+    const apiKey: string = (await AppStore.credentials.get('aibox.web_search_api_key')) ?? '';
+    const configuration: WebSearchConfiguration = { provider, endpoint, apiKey };
+    const response: WebSearchResponse = await this.webSearchService.search(query, configuration);
+    if (response.error.length > 0) {
+      this.showToast(`${response.error} 已按普通对话发送。`);
+      return '';
+    }
+    this.showToast(`已引用 ${response.results.length} 条联网搜索结果`);
+    return this.webSearchService.contextFor(response);
+  }
+
   private async send(text: string): Promise<void> {
+    if (this.generating || this.preparingSearch) return;
     await this.refreshProviders();
     const selected: ProviderRecord | undefined = this.providers.find((item: ProviderRecord): boolean => item.id === this.selectedProviderId);
     if (selected === undefined) {
@@ -272,7 +311,15 @@ export struct ChatView {
     const attachment: string = this.attachmentContent.length > 0 ? `\n\n---\n附件：${this.attachmentName}\n\n${this.attachmentContent}` : '';
     const messageCount: number = AppStore.chatViewModel.messages.length;
     const outgoingText: string = `${text}${attachment}`.trim();
-    await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, this.systemPrompt, Number(this.contextCount), this.webSearchEnabled && this.supportsWebSearch());
+    let systemPrompt: string = AppStore.composeCapabilityPrompt(text);
+    const useExternalSearch: boolean = this.webSearchEnabled && this.usesExternalWebSearch();
+    if (useExternalSearch) {
+      this.preparingSearch = true;
+      const searchContext: string = await this.externalSearchContext(text);
+      this.preparingSearch = false;
+      if (searchContext.length > 0) systemPrompt = systemPrompt.length > 0 ? `${systemPrompt}\n\n${searchContext}` : searchContext;
+    }
+    await AppStore.chatViewModel.send(provider, this.conversationId, key, adapter, outgoingText, systemPrompt, Number(this.contextCount), this.webSearchEnabled && !useExternalSearch && this.nativeWebSearchAvailable());
     const assistant: MessageRecord | undefined = AppStore.chatViewModel.messages.slice().reverse().find((item: MessageRecord): boolean => item.role === 'assistant');
     if (this.onboardingFlowStage === 'chat' && assistant !== undefined && assistant.status === MessageStatus.Completed) {
       AppStore.completeOnboarding();
@@ -391,15 +438,12 @@ export struct ChatView {
 
   private saveMoreSettings(): void {
     const modelName: string = this.modelOverride.trim();
-    const prompt: string = this.systemPrompt.trim();
     const context: number = Number(this.contextCount);
     const name: string = this.assistantName.trim().length > 0 ? this.assistantName.trim() : '助手';
     this.modelOverride = modelName;
-    this.systemPrompt = prompt;
     this.contextCount = Number.isFinite(context) && context >= 0 ? `${Math.floor(context)}` : '16';
     this.assistantName = name;
     AppStore.saveAppearance('chat_model_override', modelName);
-    AppStore.saveAppearance('chat_system_prompt', prompt);
     AppStore.saveAppearance('chat_context_count', this.contextCount);
     AppStore.saveAppearance('assistant_name', name);
     AppStorage.setOrCreate('chat_assistant_name', name);
@@ -409,7 +453,6 @@ export struct ChatView {
   private restoreMoreSettings(): void {
     this.selectedProviderId = AppStore.readAppearance('chat_selected_provider_id', '');
     this.modelOverride = AppStore.readAppearance('chat_model_override', '');
-    this.systemPrompt = AppStore.readAppearance('chat_system_prompt', '');
     const context: number = Number(AppStore.readAppearance('chat_context_count', '16'));
     this.contextCount = Number.isFinite(context) && context >= 0 ? `${Math.floor(context)}` : '16';
     this.assistantName = AppStore.readAppearance('assistant_name', '助手');
@@ -420,7 +463,7 @@ export struct ChatView {
   private moreSheet(): void {
     Column({ space: 12 }) {
       Text('会话设置').fontSize(20).fontWeight(FontWeight.Bold).width('100%');
-      Text('模型').fontSize(14).fontColor(THEME_TOKENS.secondaryText);
+      Row({ space: 8 }) { Image($r('app.media.menu_model')).width(18).height(18).fillColor(THEME_TOKENS.primary); Text('模型').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       Row({ space: 8 }) {
         Button('刷新可用模型').onClick((): void => { void this.refreshModels(); }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
         if (this.modelDiscoveryMessage.length > 0) Text(this.modelDiscoveryMessage).layoutWeight(1).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
@@ -429,11 +472,9 @@ export struct ChatView {
         Select(this.modelOptions()).selected(this.modelIndex()).value(this.availableModels[this.modelIndex()]).onSelect((index: number): void => { this.modelOverride = this.availableModels[index]; }).height(48).menuAlign(MenuAlignType.START, { dx: 0, dy: 52 }).width('100%');
       }
       TextInput({ placeholder: '模型名称，也可直接输入自定义模型', text: this.modelOverride }).onChange((value: string): void => { this.modelOverride = value; });
-      Text('系统提示词').fontSize(14).fontColor(THEME_TOKENS.secondaryText);
-      TextInput({ placeholder: '本次会话的系统提示词', text: this.systemPrompt }).onChange((value: string): void => { this.systemPrompt = value; });
-      Text('上下文消息数').fontSize(14).fontColor(THEME_TOKENS.secondaryText);
+      Row({ space: 8 }) { Image($r('app.media.menu_context')).width(18).height(18).fillColor(THEME_TOKENS.primary); Text('上下文消息数').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       TextInput({ placeholder: '0 为全部上下文', text: this.contextCount }).type(InputType.Number).onChange((value: string): void => { this.contextCount = value; });
-      Text('助手名称').fontSize(14).fontColor(THEME_TOKENS.secondaryText);
+      Row({ space: 8 }) { Image($r('app.media.menu_assistant')).width(18).height(18).fillColor(THEME_TOKENS.primary); Text('助手名称').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       TextInput({ placeholder: '助手', text: this.assistantName }).onChange((value: string): void => { this.assistantName = value; });
       Button('保存').onClick((): void => { this.saveMoreSettings(); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
     }.padding(20).width('100%').backgroundColor(THEME_TOKENS.surface);
@@ -489,7 +530,7 @@ export struct ChatView {
                   .padding(16)
                   .alignItems(HorizontalAlign.Start)
                   .margin({ bottom: 8 })
-                  .borderRadius(THEME_TOKENS.cardRadius)
+                  .borderRadius(message.role === 'assistant' ? { topLeft: 20, topRight: 20, bottomRight: 20, bottomLeft: 6 } : { topLeft: 20, topRight: 20, bottomRight: 6, bottomLeft: 20 })
                   .backgroundColor(message.role === 'assistant' ? $r('app.color.chat_assistant_bubble') : $r('app.color.chat_user_bubble'))
                   .constraintSize({ maxWidth: '94%' })
                   .width(message.role === 'assistant' ? '94%' : undefined)
@@ -539,7 +580,7 @@ export struct ChatView {
                 .padding(16)
                 .alignItems(HorizontalAlign.Start)
                 .margin({ bottom: 8 })
-                .borderRadius(THEME_TOKENS.cardRadius)
+                .borderRadius({ topLeft: 20, topRight: 20, bottomRight: 20, bottomLeft: 6 })
                 .backgroundColor($r('app.color.chat_assistant_bubble'))
                 .constraintSize({ maxWidth: '94%' })
                 .width('94%')
@@ -549,7 +590,7 @@ export struct ChatView {
           }
         }.layoutWeight(1).width('100%').edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
         if (this.errorMessage.length > 0) Text(this.errorMessage).fontColor(THEME_TOKENS.danger);
-        ChatComposer({ isGenerating: this.generating, hasAttachment: this.attachmentContent.length > 0, webSearchSupported: this.supportsWebSearch(), webSearchEnabled: this.webSearchEnabled && this.supportsWebSearch(), onSend: (text: string): void => { void this.send(text); }, onStop: (): void => { AppStore.chatViewModel.stop(); }, onMore: (): void => { this.showMore = true; void this.refreshModels(); }, onPickAttachment: (): void => { void this.selectAttachment(); }, onToggleWebSearch: (): void => { this.toggleWebSearch(); } });
+        ChatComposer({ isGenerating: this.generating || this.preparingSearch, hasAttachment: this.attachmentContent.length > 0, webSearchSupported: this.supportsWebSearch(), webSearchEnabled: this.webSearchEnabled && this.supportsWebSearch(), onSend: (text: string): void => { void this.send(text); }, onStop: (): void => { if (this.preparingSearch) this.showToast('正在准备联网检索，请稍候。'); else AppStore.chatViewModel.stop(); }, onMore: (): void => { this.showMore = true; void this.refreshModels(); }, onOpenAttachmentMenu: (): void => { void this.selectAttachment(); }, onToggleWebSearch: (): void => { this.toggleWebSearch(); } });
       }
     }
     .padding({ left: this.pagePadding, right: this.pagePadding, bottom: 56, top: 12 })
