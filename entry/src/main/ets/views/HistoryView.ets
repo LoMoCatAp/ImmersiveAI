@@ -10,6 +10,7 @@ export struct HistoryView {
   @State conversations: ConversationRecord[] = [];
   @State errorMessage: string = '';
   @StorageLink('history_revision') @Watch('onHistoryChanged') private historyRevision: number = 0;
+  @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   onOpen: (id: string) => void = (_id: string): void => {};
 
   aboutToAppear(): void {
@@ -82,6 +83,6 @@ export struct HistoryView {
       .width('100%')
       .scrollBar(BarState.Auto)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
-    }.padding({ left: 20, right: 20, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%').height('100%');
+    }.padding({ left: this.pagePadding, right: this.pagePadding, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%').height('100%');
   }
 }

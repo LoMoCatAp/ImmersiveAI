@@ -20,6 +20,7 @@ export struct ProviderSettingsView {
   @StorageLink('onboarding_provider_setup_revision') @Watch('onOnboardingProviderSetupRequested') private onboardingProviderSetupRevision: number = 0;
   @StorageLink('onboarding_provider_id') private onboardingProviderId: string = '';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
+  @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   onReturnChat: () => void = (): void => {};
   aboutToAppear(): void { this.providers = AppStore.providerViewModel.records; this.resetTransientState(); if (this.onboardingFlowStage === 'provider_setup') this.beginOnboardingProviderSetup(); void this.refresh(); }
   private onShellTabChanged(): void {
@@ -126,6 +127,6 @@ export struct ProviderSettingsView {
         }.transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.96, y: 0.96 })).animation({ duration: 240, curve: Curve.EaseOut }));
       });
        if (AppStore.providerViewModel.feedbackMessage.length > 0) Text(AppStore.providerViewModel.feedbackMessage).fontColor(THEME_TOKENS.success);
-    }.padding({ left: 20, right: 20, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%');
+    }.padding({ left: this.pagePadding, right: this.pagePadding, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%');
   }
 }

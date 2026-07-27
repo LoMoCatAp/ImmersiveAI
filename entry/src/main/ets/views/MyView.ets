@@ -48,6 +48,7 @@ export struct MyView {
   @State private isNavigating: boolean = false;
   @StorageLink('history_revision') @Watch('onHistoryRevisionChanged') private historyRevision: number = 0;
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
+  @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   onMaterialChanged: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
   onAppearanceChanged: (mode: string, accent: string) => void = (_mode: string, _accent: string): void => {};
 
@@ -448,7 +449,7 @@ export struct MyView {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 20, right: 20, top: 28, bottom: 132 })
+    .padding({ left: this.pagePadding, right: this.pagePadding, top: 28, bottom: 132 })
     .translate({ x: this.contentOffset })
     .animation({ duration: this.contentAnimationDuration, curve: Curve.EaseOut });
   }

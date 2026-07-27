@@ -69,6 +69,6 @@ export struct ProviderEditor {
         Text('模型将在聊天页的“更多”中获取和选择。').fontSize(13).fontColor(THEME_TOKENS.secondaryText);
         TextInput({ placeholder: '密钥（更新时可留空）', text: this.credentialInput }).type(InputType.Password).onChange((value: string): void => { this.credentialInput = value; });
         Row({ space: 8 }) { Button('保存供应商').onClick((): void => this.save()).height(48).layoutWeight(1).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('取消编辑').onClick((): void => this.onCancel()).height(48).layoutWeight(1).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }.width('100%');
-    }.padding({ left: 20, right: 20, bottom: 24, top: 20 }).width('100%').transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.97, y: 0.97 })).animation({ duration: 220, curve: Curve.EaseOut }));
+    }.padding({ bottom: 24, top: 20 }).width('100%').transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.97, y: 0.97 })).animation({ duration: 220, curve: Curve.EaseOut }));
   }
 }

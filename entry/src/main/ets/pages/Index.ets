@@ -29,7 +29,14 @@ struct Index {
     AppStorage.setOrCreate('appearance_color_mode', AppStore.readAppearance('color_mode', 'system'));
     AppStorage.setOrCreate('appearance_accent_color', AppStore.readAppearance('accent_color', '#3559D8'));
     AppStorage.setOrCreate('appearance_page_background', AppStore.readAppearance('page_background', ''));
+    this.publishPagePadding(this.windowWidth);
     this.showStartupNotice();
+  }
+
+  private publishPagePadding(width: number): void {
+    const padding: number = pagePaddingFor(width);
+    AppStorage.setOrCreate('layout_page_padding', padding);
+    AppStorage.set('layout_page_padding', padding);
   }
 
   onBackPress(): boolean {
@@ -119,7 +126,10 @@ struct Index {
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .onAreaChange((_oldArea: Area, newArea: Area): void => {
       const nextWidth: number = Number(newArea.width);
-      if (nextWidth > 0) this.windowWidth = nextWidth;
+      if (nextWidth > 0) {
+        this.windowWidth = nextWidth;
+        this.publishPagePadding(nextWidth);
+      }
     });
     }
   }

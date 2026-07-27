@@ -28,7 +28,7 @@ export interface ThemeTokenSet {
 }
 
 export const THEME_TOKENS: ThemeTokenSet = {
-  pagePadding: 20,
+  pagePadding: 16,
   cardRadius: 18,
   compactWidth: 600,
   tabletWidth: 900,
@@ -57,7 +57,9 @@ export const THEME_TOKENS: ThemeTokenSet = {
 };
 
 export function pagePaddingFor(width: number): number {
-  return width >= THEME_TOKENS.tabletWidth ? 32 : THEME_TOKENS.pagePadding;
+  if (width >= THEME_TOKENS.tabletWidth) return 24;
+  if (width >= THEME_TOKENS.compactWidth) return 20;
+  return THEME_TOKENS.pagePadding;
 }
 
 export function contentWidthFor(width: number): string {
