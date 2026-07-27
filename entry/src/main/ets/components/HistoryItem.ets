@@ -1,11 +1,64 @@
 import { ConversationRecord, MessageStatus } from '../model/ChatModels';
 import { THEME_TOKENS } from '../common/ThemeTokens';
-@Component export struct HistoryItem {
+
+@Component
+export struct HistoryItem {
   @Prop item: ConversationRecord = { id: '', title: '', providerId: '', modelName: '', status: MessageStatus.Completed, createdAt: 0, updatedAt: 0 };
   @Prop selected: boolean = false;
   onOpen: () => void = (): void => {};
   onExport: () => void = (): void => {};
   onDelete: () => void = (): void => {};
-  onRename: (title: string) => void = (_title: string): void => {};
-  build() { Row({ space: 8 }) { Column() { Text(this.item.title).fontWeight(FontWeight.Bold); Text(`模型：${this.item.modelName}`).fontSize(12).fontColor(THEME_TOKENS.secondaryText); }.layoutWeight(1); Button(this.selected ? '已选中' : '打开').onClick(this.onOpen).height(48).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('导出').onClick(this.onExport).height(48).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('删除').onClick(this.onDelete).height(48).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }.padding(12).backgroundColor(this.selected ? $r('app.color.selection_surface') : THEME_TOKENS.surface).borderRadius(12).width('100%'); }
+
+  private timeLabel(): string {
+    const date: Date = new Date(this.item.updatedAt);
+    const today: Date = new Date();
+    const minute: string = date.getMinutes() < 10 ? `0${date.getMinutes()}` : `${date.getMinutes()}`;
+    if (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()) return `今天 ${date.getHours()}:${minute}`;
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+
+  build() {
+    Row({ space: 12 }) {
+      Text('')
+        .width(3)
+        .height(40)
+        .borderRadius(2)
+        .backgroundColor(THEME_TOKENS.primary)
+        .opacity(this.selected ? 1 : 0);
+      Column({ space: 5 }) {
+        Text(this.item.title.length > 0 ? this.item.title : '未命名会话')
+          .fontSize(16)
+          .fontWeight(this.selected ? FontWeight.Medium : FontWeight.Regular)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%');
+        Row({ space: 8 }) {
+          Text(this.item.modelName.length > 0 ? this.item.modelName : '未设置模型')
+            .fontSize(12)
+            .fontColor(THEME_TOKENS.secondaryText)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1);
+          Text(this.timeLabel()).fontSize(12).fontColor(THEME_TOKENS.secondaryText);
+        }.width('100%');
+      }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+      Button({ type: ButtonType.Circle }) {
+        Image($r('app.media.history_more')).width(20).height(20).fillColor(THEME_TOKENS.primary);
+      }
+        .width(40)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .bindMenu([
+          { value: '导出 Markdown', action: (): void => { this.onExport(); } },
+          { value: '删除会话', action: (): void => { this.onDelete(); } }
+        ])
+        .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.86 });
+    }
+      .width('100%')
+      .padding({ left: 14, right: 8, top: 12, bottom: 12 })
+      .backgroundColor(this.selected ? $r('app.color.selection_surface') : Color.Transparent)
+      .borderRadius(12)
+      .onClick(this.onOpen)
+      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.98 });
+  }
 }

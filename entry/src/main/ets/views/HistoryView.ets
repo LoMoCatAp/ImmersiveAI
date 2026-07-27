@@ -106,20 +106,34 @@ export struct HistoryView {
 
   build() {
     Column({ space: 12 }) {
-      Button('新建会话').onClick((): void => { void this.create(); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+      Row() {
+        Column({ space: 4 }) {
+          Text('历史会话').fontSize(24).fontWeight(FontWeight.Bold);
+          Text(`本地保存 ${this.conversations.length} 个会话`).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
+        }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+        Button({ type: ButtonType.Circle }) {
+          Image($r('app.media.chat_add')).width(21).height(21).fillColor(THEME_TOKENS.primaryText);
+        }
+          .accessibilityText('新建会话')
+          .onClick((): void => { void this.create(); })
+          .width(44)
+          .height(44)
+          .backgroundColor(THEME_TOKENS.primary)
+          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.86 });
+      }.width('100%').padding({ bottom: 4 });
       if (AppStore.historyViewModel.feedbackMessage.length > 0) {
-        Text(AppStore.historyViewModel.feedbackMessage).fontColor(THEME_TOKENS.success);
+        Text(AppStore.historyViewModel.feedbackMessage).fontSize(13).fontColor(THEME_TOKENS.success).width('100%');
       }
       if (this.errorMessage.length > 0) {
-        Text(this.errorMessage).fontColor(THEME_TOKENS.danger);
+        Text(this.errorMessage).fontSize(13).fontColor(THEME_TOKENS.danger).width('100%');
       }
       if (this.conversations.length === 0 && this.errorMessage.length === 0) {
         EmptyState({ title: '暂无会话', detail: '本地会话会显示在这里。' });
-      }
-      List({ space: 8 }) {
-        ForEach(this.conversations, (item: ConversationRecord) => {
-          ListItem() {
-            Column() {
+      } else {
+        Text('会话').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').padding({ top: 4, bottom: 2 });
+        List({ space: 0 }) {
+          ForEach(this.conversations, (item: ConversationRecord, index: number) => {
+            ListItem() {
               HistoryItem({
                 item,
                 selected: AppStore.historyViewModel.selectedId === item.id,
@@ -128,13 +142,16 @@ export struct HistoryView {
                 onDelete: (): void => { this.remove(item); }
               });
             }
-          }
-        }, (item: ConversationRecord): string => item.id);
+            if (index < this.conversations.length - 1) ListItem() { Divider().margin({ left: 18, right: 18 }); }.height(1);
+          }, (item: ConversationRecord): string => item.id);
+        }
+        .layoutWeight(1)
+        .width('100%')
+        .backgroundColor(THEME_TOKENS.surface)
+        .borderRadius(THEME_TOKENS.cardRadius)
+        .scrollBar(BarState.Auto)
+        .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
       }
-      .layoutWeight(1)
-      .width('100%')
-      .scrollBar(BarState.Auto)
-      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
     }.padding({ left: this.pagePadding, right: this.pagePadding, bottom: THEME_TOKENS.contentBottomInset, top: 20 }).width('100%').height('100%');
   }
 }
