@@ -19,6 +19,10 @@ const SEARCH_PROVIDER_OPTIONS: string[] = ['服务商原生', '本地 SearXNG', 
 const KNOWLEDGE_LIMIT_OPTIONS: string[] = ['4,000 字符', '8,000 字符', '16,000 字符'];
 const KNOWLEDGE_LIMIT_VALUES: number[] = [4000, 8000, 16000];
 const IMAGE_SIZE_OPTIONS: string[] = ['1024 x 1024', '1024 x 1536', '1536 x 1024'];
+const PROMPT_MEMORY_CONTENT_OFFSET: number = -45;
+const SKILLS_CONTENT_OFFSET: number = -45;
+const KNOWLEDGE_CONTENT_OFFSET: number = 33;
+const TOOLS_CONTENT_OFFSET: number = -70;
 
 @Component
 export struct CapabilityCenterView {
@@ -48,6 +52,9 @@ export struct CapabilityCenterView {
   @State private imageSizeIndex: number = 0;
   @State private savedMessage: string = '';
   @State private testingSearch: boolean = false;
+  @State private showMcpSettings: boolean = false;
+  @State private showSearchSettings: boolean = false;
+  @State private showImageSettings: boolean = false;
   @State private knowledgeSources: KnowledgeSource[] = [];
   @State private knowledgeNoteTitle: string = '';
   @State private knowledgeNoteContent: string = '';
@@ -333,75 +340,128 @@ export struct CapabilityCenterView {
   private extensionList(): void {
     Column({ space: 18 }) {
       Column({ space: 8 }) {
-        Row() { Column({ space: 3 }) { Text('MCP 工具服务').fontSize(17).fontWeight(FontWeight.Medium); Text('保存远程 Streamable HTTP 或 SSE 配置；工具发现与执行将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.mcpEnabled }).onChange((enabled: boolean): void => { this.mcpEnabled = enabled; this.saveEnabled('capability_mcp_enabled', enabled); }); }.width('100%');
-        if (this.mcpEnabled) {
-          Column({ space: 8 }) {
-            Select(MCP_TRANSPORT_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.mcpTransportIndex).value(MCP_TRANSPORT_OPTIONS[this.mcpTransportIndex]).onSelect((index: number): void => { this.mcpTransportIndex = index; this.save('capability_mcp_transport', `${index}`); }).width('100%');
-            TextInput({ placeholder: 'https://example.com/mcp', text: this.mcpEndpoint }).onChange((value: string): void => { this.mcpEndpoint = value; }).width('100%');
-            TextInput({ placeholder: '超时秒数', text: this.mcpTimeout }).type(InputType.Number).onChange((value: string): void => { this.mcpTimeout = value; }).width('100%');
-            Button('保存 MCP 配置').onClick((): void => { this.save('capability_mcp_endpoint', this.mcpEndpoint); this.save('capability_mcp_timeout', this.mcpTimeout); }).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
-          }.width('100%').margin({ top: 18 });
-        }
+        Row({ space: 8 }) {
+          Column({ space: 3 }) { Text('MCP 工具服务').fontSize(17).fontWeight(FontWeight.Medium); Text('保存远程 Streamable HTTP 或 SSE 配置；工具发现与执行将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Toggle({ type: ToggleType.Switch, isOn: this.mcpEnabled }).onChange((enabled: boolean): void => { this.mcpEnabled = enabled; this.saveEnabled('capability_mcp_enabled', enabled); if (enabled) this.showMcpSettings = true; else this.showMcpSettings = false; });
+          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.mcpEnabled ? 1 : 0.32); }
+            .width(36).height(36).backgroundColor(Color.Transparent).enabled(this.mcpEnabled).onClick((): void => { this.showMcpSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+        }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
-        Row() { Column({ space: 3 }) { Text('联网搜索').fontSize(17).fontWeight(FontWeight.Medium); Text('可选择服务商原生、本地或 API 搜索服务。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.webSearchEnabled }).onChange((enabled: boolean): void => { this.webSearchEnabled = enabled; this.saveEnabled('capability_web_search_enabled', enabled); }); }.width('100%');
-        if (this.webSearchEnabled) {
-          Select(SEARCH_PROVIDER_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.webSearchProviderIndex).value(SEARCH_PROVIDER_OPTIONS[this.webSearchProviderIndex]).onSelect((index: number): void => { this.webSearchProviderIndex = index; }).width('100%');
-          if (this.webSearchProviderIndex > 0) TextInput({ placeholder: this.webSearchProviderIndex === 1 ? '本地 SearXNG 地址' : 'API 服务地址（可留空）', text: this.webSearchEndpoint }).onChange((value: string): void => { this.webSearchEndpoint = value; }).width('100%');
-          if (this.webSearchProviderIndex > 1) TextInput({ placeholder: 'API Key', text: this.webSearchApiKey }).type(InputType.Password).onChange((value: string): void => { this.webSearchApiKey = value; }).width('100%');
-          Row({ space: 10 }) {
-            Button('保存搜索配置').onClick((): void => { void this.saveSearchSettings(); }).layoutWeight(1).height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
-            Button(this.testingSearch ? '正在测试' : '测试搜索').onClick((): void => { if (!this.testingSearch) void this.testSearchSettings(); }).enabled(!this.testingSearch).height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
-          }.width('100%');
-        }
+        Row({ space: 8 }) {
+          Column({ space: 3 }) { Text('联网搜索').fontSize(17).fontWeight(FontWeight.Medium); Text('可选择服务商原生、本地或 API 搜索服务。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Toggle({ type: ToggleType.Switch, isOn: this.webSearchEnabled }).onChange((enabled: boolean): void => { this.webSearchEnabled = enabled; this.saveEnabled('capability_web_search_enabled', enabled); if (enabled) this.showSearchSettings = true; else this.showSearchSettings = false; });
+          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.webSearchEnabled ? 1 : 0.32); }
+            .width(36).height(36).backgroundColor(Color.Transparent).enabled(this.webSearchEnabled).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+        }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
-        Row() { Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.imageEnabled }).onChange((enabled: boolean): void => { this.imageEnabled = enabled; this.saveEnabled('capability_image_enabled', enabled); }); }.width('100%');
-        if (this.imageEnabled) {
-          Column({ space: 8 }) {
-            TextInput({ placeholder: '服务地址', text: this.imageEndpoint }).onChange((value: string): void => { this.imageEndpoint = value; }).width('100%');
-            TextInput({ placeholder: '图像模型名称', text: this.imageModel }).onChange((value: string): void => { this.imageModel = value; }).width('100%');
-            Select(IMAGE_SIZE_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.imageSizeIndex).value(IMAGE_SIZE_OPTIONS[this.imageSizeIndex]).onSelect((index: number): void => { this.imageSizeIndex = index; }).width('100%');
-            Button('保存图像生成配置').onClick((): void => { this.save('capability_image_endpoint', this.imageEndpoint); this.save('capability_image_model', this.imageModel); this.save('capability_image_size', `${this.imageSizeIndex}`); }).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
-          }.width('100%').margin({ top: 18 });
-        }
+        Row({ space: 8 }) {
+          Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
+          Toggle({ type: ToggleType.Switch, isOn: this.imageEnabled }).onChange((enabled: boolean): void => { this.imageEnabled = enabled; this.saveEnabled('capability_image_enabled', enabled); if (enabled) this.showImageSettings = true; else this.showImageSettings = false; });
+          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.imageEnabled ? 1 : 0.32); }
+            .width(36).height(36).backgroundColor(Color.Transparent).enabled(this.imageEnabled).onClick((): void => { this.showImageSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 });
+        }.width('100%');
       }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
     }.width('100%');
+  }
+
+  @Builder
+  private mcpSettingsSheet(): void {
+    Column({ space: 14 }) {
+      Text('MCP 工具服务').fontSize(20).fontWeight(FontWeight.Bold).width('100%');
+      Text('配置远程 Streamable HTTP 或 SSE 服务。').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
+      Select(MCP_TRANSPORT_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.mcpTransportIndex).value(MCP_TRANSPORT_OPTIONS[this.mcpTransportIndex]).onSelect((index: number): void => { this.mcpTransportIndex = index; this.save('capability_mcp_transport', `${index}`); }).width('100%');
+      TextInput({ placeholder: 'https://example.com/mcp', text: this.mcpEndpoint }).onChange((value: string): void => { this.mcpEndpoint = value; }).width('100%');
+      TextInput({ placeholder: '超时秒数', text: this.mcpTimeout }).type(InputType.Number).onChange((value: string): void => { this.mcpTimeout = value; }).width('100%');
+      Button('保存 MCP 配置').onClick((): void => { this.save('capability_mcp_endpoint', this.mcpEndpoint); this.save('capability_mcp_timeout', this.mcpTimeout); this.showMcpSettings = false; }).width('100%').height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+    }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 });
+  }
+
+  @Builder
+  private searchSettingsSheet(): void {
+    Scroll() {
+      Column({ space: 14 }) {
+        Text('联网搜索').fontSize(20).fontWeight(FontWeight.Bold).width('100%');
+        Text('选择服务商原生、本地或 API 搜索服务。').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
+        Select(SEARCH_PROVIDER_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.webSearchProviderIndex).value(SEARCH_PROVIDER_OPTIONS[this.webSearchProviderIndex]).onSelect((index: number): void => { this.webSearchProviderIndex = index; }).width('100%');
+        if (this.webSearchProviderIndex > 0) TextInput({ placeholder: this.webSearchProviderIndex === 1 ? '本地 SearXNG 地址' : 'API 服务地址（可留空）', text: this.webSearchEndpoint }).onChange((value: string): void => { this.webSearchEndpoint = value; }).width('100%');
+        if (this.webSearchProviderIndex > 1) TextInput({ placeholder: 'API Key', text: this.webSearchApiKey }).type(InputType.Password).onChange((value: string): void => { this.webSearchApiKey = value; }).width('100%');
+        Row({ space: 10 }) {
+          Button('保存搜索配置').onClick((): void => { void this.saveSearchSettings(); this.showSearchSettings = false; }).layoutWeight(1).height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+          Button(this.testingSearch ? '正在测试' : '测试搜索').onClick((): void => { if (!this.testingSearch) void this.testSearchSettings(); }).enabled(!this.testingSearch).height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+        }.width('100%');
+      }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 });
+    }.width('100%').height(430).scrollBar(BarState.Auto).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+  }
+
+  @Builder
+  private imageSettingsSheet(): void {
+    Column({ space: 14 }) {
+      Text('图像生成').fontSize(20).fontWeight(FontWeight.Bold).width('100%');
+      Text('配置兼容 OpenAI Images API 的文生图服务。').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
+      TextInput({ placeholder: '服务地址', text: this.imageEndpoint }).onChange((value: string): void => { this.imageEndpoint = value; }).width('100%');
+      TextInput({ placeholder: '图像模型名称', text: this.imageModel }).onChange((value: string): void => { this.imageModel = value; }).width('100%');
+      Select(IMAGE_SIZE_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.imageSizeIndex).value(IMAGE_SIZE_OPTIONS[this.imageSizeIndex]).onSelect((index: number): void => { this.imageSizeIndex = index; }).width('100%');
+      Button('保存图像生成配置').onClick((): void => { this.save('capability_image_endpoint', this.imageEndpoint); this.save('capability_image_model', this.imageModel); this.save('capability_image_size', `${this.imageSizeIndex}`); this.showImageSettings = false; }).width('100%').height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
+    }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 });
+  }
+
+  @Builder
+  private promptMemoryContent(): void {
+    Column({ space: 12 }) {
+      this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
+      this.systemList();
+      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+    }.width('100%').translate({ y: PROMPT_MEMORY_CONTENT_OFFSET });
+  }
+
+  @Builder
+  private skillsContent(): void {
+    Column({ space: 12 }) {
+      this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
+      this.skillList();
+      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+    }.width('100%').translate({ y: SKILLS_CONTENT_OFFSET });
+  }
+
+  @Builder
+  private knowledgeContent(): void {
+    Column({ space: 12 }) {
+      this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
+      this.knowledgeList();
+      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+    }.width('100%').translate({ y: KNOWLEDGE_CONTENT_OFFSET });
+  }
+
+  @Builder
+  private toolsContent(): void {
+    Column({ space: 12 }) {
+      this.sectionTitle('工具与扩展', '联网搜索由聊天页按服务商能力启用。');
+      this.extensionList();
+      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+    }.width('100%').translate({ y: TOOLS_CONTENT_OFFSET });
   }
 
   build() {
     Scroll(this.contentScroller) {
       Column() {
-        if (this.page === 'prompt') {
-          Column({ space: 12 }) {
-            this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
-            this.systemList();
-            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -35 });
-        } else if (this.page === 'skills') {
-          Column({ space: 12 }) {
-            this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
-            this.skillList();
-            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -35 });
-        } else if (this.page === 'knowledge') {
-          Column({ space: 12 }) {
-            this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
-            this.knowledgeList();
-            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: 18 });
-        } else {
-          Column({ space: 12 }) {
-            this.sectionTitle('工具与扩展', '联网搜索由聊天页按服务商能力启用。');
-            this.extensionList();
-            if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
-          }.width('100%').translate({ y: -50 });
-        }
+        if (this.page === 'prompt') this.promptMemoryContent();
+        else if (this.page === 'skills') this.skillsContent();
+        else if (this.page === 'knowledge') this.knowledgeContent();
+        else this.toolsContent();
       }
       .width('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
       .alignItems(HorizontalAlign.Start)
       .justifyContent(FlexAlign.Start);
-    }.width('100%').height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
+    }
+    .width('100%')
+    .height('100%')
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+    .bindSheet($$this.showMcpSettings, this.mcpSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true })
+    .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.LARGE], preferType: SheetType.BOTTOM, showClose: true, dragBar: true })
+    .bindSheet($$this.showImageSettings, this.imageSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true });
   }
 }

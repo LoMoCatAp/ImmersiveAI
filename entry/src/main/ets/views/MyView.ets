@@ -17,6 +17,7 @@ enum MySection { Home = 'home', Settings = 'settings', Prompt = 'prompt', Skills
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 const HEATMAP_DAYS: number = 84;
+const ABOUT_CONTENT_OFFSET: number = -45;
 const PRIVACY_ENTRIES: PrivacyEntry[] = [
   { title: '本地存储', content: 'AIBox 仅在设备本地保存供应商配置、会话记录、外观设置与 Token 统计。API Key 使用系统资产存储能力保存，不会发送至开发者服务器。' },
   { title: '第三方服务', content: '当您发起对话、测试连接、查询模型或启用联网搜索时，输入内容、系统提示词、上下文及导入文件文本会直接发送到您自行配置的第三方 AI 服务商。相关数据的处理规则由该服务商的隐私政策和服务条款决定。' },
@@ -729,7 +730,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
-      .translate({ y: -35 })
+      .translate({ y: ABOUT_CONTENT_OFFSET })
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
