@@ -71,7 +71,7 @@ struct Index {
       return;
     }
     const version: string = this.startupVersionName.length > 0 ? this.startupVersionName : '最新版本';
-    const message: string = `更新版本：${version}\n\n更新内容：\n- 优化首次引导的步骤提示与动效\n- 修正 DeepSeek 引导默认模型\n- 改进服务商配置与首次对话流程\n\n欢迎继续使用 AIBox`;
+    const message: string = `更新版本：${version}\n\n更新内容：\n- 支持 New API 中转站连接 JSON 的导入与模型自动获取\n- 修复 OpenAI 兼容服务商的 /v1 模型地址解析\n- 优化更新日志的图标、展开控件与下拉动效`;
     void promptAction.showDialog({ title: '更新说明', message, buttons: [{ text: '知道了', color: this.appearanceAccentColor }] });
   }
 

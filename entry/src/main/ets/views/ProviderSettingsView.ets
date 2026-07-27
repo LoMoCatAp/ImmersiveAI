@@ -1,7 +1,7 @@
 import { ProviderEditor } from '../components/ProviderEditor';
 import { ProviderCard } from '../components/ProviderCard';
 import { ImportPreview } from '../components/ImportPreview';
-import { ProtocolStyle, ProviderRecord, ProviderDraft, ProviderKind, ConnectionTestStatus } from '../model/ProviderModels';
+import { ProtocolStyle, ProviderRecord, ProviderDraft, ProviderKind, ConnectionTestStatus, ImportPreview as ProviderImportPreview } from '../model/ProviderModels';
 import { AppStore } from '../common/AppStore';
 import { THEME_TOKENS } from '../common/ThemeTokens';
 import { ImportService } from '../service/ImportService';
@@ -16,6 +16,7 @@ export struct ProviderSettingsView {
   @State editingId: string = '';
   @State editingDraft: ProviderDraft | undefined = undefined;
   @State importText: string = '';
+  @State importPreview: ProviderImportPreview | undefined = undefined;
   @StorageLink('shell_selected_tab') @Watch('onShellTabChanged') private shellSelectedTab: ShellTab = ShellTab.Chat;
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
   @StorageLink('onboarding_provider_setup_revision') @Watch('onOnboardingProviderSetupRequested') private onboardingProviderSetupRevision: number = 0;
@@ -32,6 +33,7 @@ export struct ProviderSettingsView {
     this.editingId = '';
     this.editingDraft = undefined;
     this.importText = '';
+    this.importPreview = undefined;
     AppStore.providerViewModel.resetTransientState();
   }
   private async refresh(): Promise<void> { await AppStore.providerViewModel.load(); this.providers = AppStore.providerViewModel.records; }
@@ -107,12 +109,24 @@ export struct ProviderSettingsView {
     }
   }
   private beginEdit(provider: ProviderRecord): void { this.editingId = provider.id; this.editingDraft = { displayName: provider.displayName, providerKind: provider.providerKind, protocolStyle: provider.protocolStyle, endpoint: provider.endpoint, modelName: provider.modelName, credential: '' }; AppStorage.setOrCreate('provider_edit_revision', Date.now()); }
-  private previewImport(): void { AppStore.providerViewModel.beginImport(ImportService.preview(this.importText)); }
+  private previewImport(): void {
+    const preview: ProviderImportPreview = ImportService.preview(this.importText);
+    AppStore.providerViewModel.beginImport(preview);
+    this.importPreview = preview;
+  }
+  private cancelImport(): void {
+    this.importPreview = undefined;
+    AppStore.providerViewModel.cancelImport();
+  }
   private async confirmImport(): Promise<void> {
     const preview = AppStore.providerViewModel.preview;
     if (preview === undefined || preview.errors.length > 0) return;
     if (preview.draft.modelName.trim().length > 0) {
       await AppStore.providerViewModel.confirmImport();
+      if (AppStore.providerViewModel.preview === undefined) {
+        this.importText = '';
+        this.importPreview = undefined;
+      }
       AppStore.refreshShell();
       await this.refresh();
       return;
@@ -130,7 +144,7 @@ export struct ProviderSettingsView {
       const saved: boolean = await AppStore.providerViewModel.save(draft);
       if (saved) {
         this.importText = '';
-        AppStore.providerViewModel.cancelImport();
+        this.cancelImport();
         AppStore.refreshShell();
         await this.refresh();
         promptAction.showToast({ message: `已导入供应商，并选择 ${draft.modelName}。` });
@@ -142,7 +156,7 @@ export struct ProviderSettingsView {
     this.editingId = '';
     this.editingDraft = preview.draft;
     this.importText = '';
-    AppStore.providerViewModel.cancelImport();
+    this.cancelImport();
     promptAction.showToast({ message: '未获取到模型，已保留配置，请手动填写或刷新模型列表。' });
   }
   build() {
@@ -160,8 +174,8 @@ export struct ProviderSettingsView {
        if (this.editingId.length > 0 || this.editingDraft !== undefined) ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onDiscoverModels: (draft: ProviderDraft, id: string): Promise<ModelDiscoveryResult> => this.discoverEditorModels(draft, id), onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
        else Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
-       Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
-       if (AppStore.providerViewModel.preview !== undefined) ImportPreview({ preview: AppStore.providerViewModel.preview, onConfirm: (): void => { void this.confirmImport(); }, onCancel: (): void => { AppStore.providerViewModel.cancelImport(); }, onClear: (): void => { this.importText = ''; AppStore.providerViewModel.cancelImport(); } });
+       Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; this.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
+       if (this.importPreview !== undefined) ImportPreview({ preview: this.importPreview, onConfirm: (): void => { void this.confirmImport(); }, onCancel: (): void => { this.cancelImport(); }, onClear: (): void => { this.importText = ''; this.cancelImport(); } });
       if (this.onboardingFlowStage === 'provider_test' && this.onboardingProvider() !== undefined) Button('测试引导中的供应商').onClick((): void => { const provider: ProviderRecord | undefined = this.onboardingProvider(); if (provider !== undefined) void this.test(provider); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
       if (AppStore.providerViewModel.errorMessage.length > 0) Text(AppStore.providerViewModel.errorMessage).fontColor(THEME_TOKENS.danger);
       ForEach(this.providers, (provider: ProviderRecord) => {
