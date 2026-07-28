@@ -15,6 +15,7 @@ export struct HistoryView {
   @State errorMessage: string = '';
   @StorageLink('history_revision') @Watch('onHistoryChanged') private historyRevision: number = 0;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
+  @StorageLink('immersive_list_material_enabled') private listMaterialEnabled: boolean = false;
   private readonly webSearchService: WebSearchService = new WebSearchService();
   onOpen: (id: string) => void = (_id: string): void => {};
 
@@ -138,7 +139,8 @@ export struct HistoryView {
         }
         .layoutWeight(1)
         .width('100%')
-        .backgroundColor(THEME_TOKENS.surface)
+        .backgroundColor(this.listMaterialEnabled ? Color.Transparent : THEME_TOKENS.surface)
+        .backgroundBlurStyle(this.listMaterialEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
         .borderRadius(THEME_TOKENS.cardRadius)
         .scrollBar(BarState.Auto)
         .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
