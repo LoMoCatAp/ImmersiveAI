@@ -61,9 +61,7 @@ export struct ChatView {
   @StorageLink('onboarding_flow_stage') private onboardingFlowStage: string = '';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
-  @StorageLink('immersive_chat_material_enabled') private chatMaterialEnabled: boolean = false;
-  @StorageLink('immersive_chat_press_enabled') private chatPressEnabled: boolean = false;
-  @StorageLink('immersive_chat_motion_enabled') private chatMotionEnabled: boolean = false;
+  @StorageLink('immersive_chat_enabled') private chatImmersiveEnabled: boolean = false;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   @StorageLink('chat_rendered_assistant_content') private renderedAssistantContent: string = '{}';
   @StorageLink('chat_rendered_assistant_reasoning') private renderedAssistantReasoning: string = '{}';
@@ -260,7 +258,7 @@ export struct ChatView {
   }
 
   private bubbleBackground(role: string): ResourceColor {
-    if (this.chatMaterialEnabled) return Color.Transparent;
+    if (this.chatImmersiveEnabled) return Color.Transparent;
     return role === 'assistant' ? $r('app.color.chat_assistant_bubble') : $r('app.color.chat_user_bubble');
   }
 
@@ -602,9 +600,9 @@ export struct ChatView {
                   .margin({ bottom: 8 })
                   .borderRadius(message.role === 'assistant' ? { topLeft: 20, topRight: 20, bottomRight: 20, bottomLeft: 6 } : { topLeft: 20, topRight: 20, bottomRight: 6, bottomLeft: 20 })
                   .backgroundColor(this.bubbleBackground(message.role))
-                  .backgroundBlurStyle(this.chatMaterialEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
-                  .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: this.chatPressEnabled ? 0.98 : 1 })
-                  .animation({ duration: this.chatMotionEnabled ? 180 : 0, curve: Curve.Friction })
+                  .backgroundBlurStyle(this.chatImmersiveEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
+                  .clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.chatImmersiveEnabled ? 0.88 : 1 })
+                  .animation({ duration: this.chatImmersiveEnabled ? 220 : 0, curve: Curve.Friction })
                   .constraintSize({ maxWidth: '94%' })
                   .width(message.role === 'assistant' ? '94%' : undefined)
                   .gesture(LongPressGesture({ repeat: false, duration: 500 }).onAction((): void => {
@@ -656,9 +654,9 @@ export struct ChatView {
                 .margin({ bottom: 8 })
                 .borderRadius({ topLeft: 20, topRight: 20, bottomRight: 20, bottomLeft: 6 })
                 .backgroundColor(this.bubbleBackground('assistant'))
-                .backgroundBlurStyle(this.chatMaterialEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
-                .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: this.chatPressEnabled ? 0.98 : 1 })
-                .animation({ duration: this.chatMotionEnabled ? 180 : 0, curve: Curve.Friction })
+                .backgroundBlurStyle(this.chatImmersiveEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
+                .clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.chatImmersiveEnabled ? 0.88 : 1 })
+                .animation({ duration: this.chatImmersiveEnabled ? 220 : 0, curve: Curve.Friction })
                 .constraintSize({ maxWidth: '94%' })
                 .width('94%')
                 .gesture(LongPressGesture({ repeat: false, duration: 500 }).onAction((): void => { this.copyMessage(this.liveDisplayContent); }));

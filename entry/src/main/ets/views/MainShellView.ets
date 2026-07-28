@@ -30,9 +30,7 @@ export struct MainShellView {
   @StorageLink('appearance_color_mode') @Watch('onAppearanceColorModeChanged') private appearanceColorMode: string = 'system';
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @StorageLink('appearance_page_background') private appearancePageBackground: string = '';
-  @StorageLink('immersive_nav_material_enabled') private navMaterialEnabled: boolean = false;
-  @StorageLink('immersive_nav_press_enabled') private navPressEnabled: boolean = false;
-  @StorageLink('immersive_nav_motion_enabled') private navMotionEnabled: boolean = false;
+  @StorageLink('immersive_nav_enabled') private navImmersiveEnabled: boolean = false;
   @State private hdsBarHiddenBySubPage: boolean = false;
   private material: ShellMaterialMode = ShellMaterialMode.Fallback;
   private materialReason: string = '正在检测沉浸光感能力';
@@ -179,8 +177,8 @@ export struct MainShellView {
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
       .onClick((): void => { this.selectedTab = tab; })
-      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: this.navPressEnabled ? 0.9 : 1 })
-      .animation({ duration: this.navMotionEnabled ? 180 : 0, curve: Curve.Friction })
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.navImmersiveEnabled ? 0.84 : 1 })
+      .animation({ duration: this.navImmersiveEnabled ? 220 : 0, curve: Curve.Friction })
       .width('100%')
       .height(52)
       .backgroundColor('#00000000');
@@ -198,7 +196,7 @@ export struct MainShellView {
     .vertical(false)
     .barPosition(BarPosition.End)
     .divider({ mode: DividerMode.NONE })
-    .barFloatingStyle({ barBottomMargin: 4, adaptToHandedness: true, lightColor: this.appearanceAccentColor, systemMaterialEffect: this.navMaterialEnabled && this.materialLevel !== MaterialLevel.Off ? { materialType: hdsMaterial.MaterialType.IMMERSIVE, materialLevel: this.toHdsLevel(this.materialLevel) } : undefined })
+    .barFloatingStyle({ barBottomMargin: 4, adaptToHandedness: true, lightColor: this.appearanceAccentColor, systemMaterialEffect: this.navImmersiveEnabled && this.materialLevel !== MaterialLevel.Off ? { materialType: hdsMaterial.MaterialType.IMMERSIVE, materialLevel: this.toHdsLevel(this.materialLevel) } : undefined })
     .onChange((index: number): void => { this.navigate({ target: index as ShellTab, source: NavigationSource.HdsTabs, requestId: Date.now() }); })
     .width('100%').height('100%');
   }
