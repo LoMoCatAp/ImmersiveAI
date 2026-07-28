@@ -88,6 +88,8 @@ export struct MyView {
   @StorageLink('my_back_request_revision') @Watch('onBackRequested') private backRequestRevision: number = 0;
   @StorageLink('knowledge_file_picker_active') private knowledgeFilePickerActive: boolean = false;
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
+  @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
+  @StorageLink('appearance_page_background') private appearancePageBackground: string = '';
   private pageStack: NavPathStack = new NavPathStack();
   private homeScroller: Scroller = new Scroller();
   private settingsScroller: Scroller = new Scroller();
@@ -684,6 +686,13 @@ export struct MyView {
     };
   }
 
+  private destinationBackground(): ResourceColor {
+    if (new RegExp('^#[0-9A-Fa-f]{6}$').test(this.appearancePageBackground)) return this.appearancePageBackground;
+    if (this.appearanceColorMode === 'dark') return '#10131A';
+    if (this.appearanceColorMode === 'light') return '#F7F8FC';
+    return THEME_TOKENS.pageBackground;
+  }
+
   private dynamicTitleBar(): DynamicHideParams {
     return {
       hideTitleArea: true,
@@ -705,6 +714,7 @@ export struct MyView {
       .width('100%')
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
+      .backgroundColor(this.destinationBackground())
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
@@ -731,6 +741,7 @@ export struct MyView {
       .height('100%')
       .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
       .translate({ y: ABOUT_CONTENT_OFFSET })
+      .backgroundColor(this.destinationBackground())
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
     }
@@ -748,7 +759,10 @@ export struct MyView {
   @Builder
   private capabilityDestination(section: MySection, title: string, page: string): void {
     HdsNavDestination() {
-      CapabilityCenterView({ page: page });
+      Stack() {
+        Column().width('100%').height('100%').backgroundColor(this.destinationBackground());
+        CapabilityCenterView({ page: page });
+      }.width('100%').height('100%');
     }
     .titleBar(this.immersiveTitleBar(title))
     .hideTitleBar(false)
