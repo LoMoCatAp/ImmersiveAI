@@ -29,25 +29,8 @@ struct Index {
     AppStorage.setOrCreate('appearance_color_mode', AppStore.readAppearance('color_mode', 'system'));
     AppStorage.setOrCreate('appearance_accent_color', AppStore.readAppearance('accent_color', '#3559D8'));
     AppStorage.setOrCreate('appearance_page_background', AppStore.readAppearance('page_background', ''));
-    this.initializeImmersiveAppearance();
     this.publishPagePadding(this.windowWidth);
     this.showStartupNotice();
-  }
-
-  private initializeImmersiveAppearance(): void {
-    this.initializeImmersiveGroup('immersive_nav_enabled', ['immersive_nav_material_enabled', 'immersive_nav_press_enabled', 'immersive_nav_motion_enabled']);
-    this.initializeImmersiveGroup('immersive_list_enabled', ['immersive_list_material_enabled', 'immersive_list_press_enabled', 'immersive_list_motion_enabled']);
-    this.initializeImmersiveGroup('immersive_chat_enabled', ['immersive_chat_material_enabled', 'immersive_chat_press_enabled', 'immersive_chat_motion_enabled']);
-  }
-
-  private initializeImmersiveGroup(key: string, legacyKeys: string[]): void {
-      const saved: string = AppStore.readAppearance(key, '');
-      const enabled: boolean = saved.length > 0
-        ? saved === 'true'
-        : legacyKeys.some((legacyKey: string): boolean => AppStore.readAppearance(legacyKey, 'false') === 'true');
-      AppStore.saveAppearance(key, enabled ? 'true' : 'false');
-      AppStorage.setOrCreate(key, enabled);
-      AppStorage.set(key, enabled);
   }
 
   private publishPagePadding(width: number): void {

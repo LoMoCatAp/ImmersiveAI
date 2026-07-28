@@ -5,7 +5,6 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 export struct HistoryItem {
   @Prop item: ConversationRecord = { id: '', title: '', providerId: '', modelName: '', status: MessageStatus.Completed, createdAt: 0, updatedAt: 0 };
   @Prop selected: boolean = false;
-  @StorageLink('immersive_list_enabled') private listImmersiveEnabled: boolean = false;
   onOpen: () => void = (): void => {};
   onExport: () => void = (): void => {};
   onDelete: () => void = (): void => {};
@@ -58,10 +57,8 @@ export struct HistoryItem {
       .width('100%')
       .padding({ left: 14, right: 8, top: 12, bottom: 12 })
       .backgroundColor(this.selected ? $r('app.color.selection_surface') : Color.Transparent)
-      .backgroundBlurStyle(this.listImmersiveEnabled && !this.selected ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE)
       .borderRadius(12)
       .onClick(this.onOpen)
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 })
-      .animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.98 });
   }
 }

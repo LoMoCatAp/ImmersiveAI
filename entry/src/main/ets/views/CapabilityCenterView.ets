@@ -59,7 +59,6 @@ export struct CapabilityCenterView {
   @State private knowledgeNoteTitle: string = '';
   @State private knowledgeNoteContent: string = '';
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
-  @StorageLink('immersive_list_enabled') private listImmersiveEnabled: boolean = false;
   private contentScroller: Scroller = new Scroller();
   private readonly webSearchService: WebSearchService = new WebSearchService();
 
@@ -104,14 +103,6 @@ export struct CapabilityCenterView {
 
   private readEnabled(key: string, fallback: boolean): boolean {
     return AppStore.readAppearance(key, fallback ? 'true' : 'false') === 'true';
-  }
-
-  private listSurface(): ResourceColor {
-    return this.listImmersiveEnabled ? Color.Transparent : THEME_TOKENS.surface;
-  }
-
-  private listBlur(): BlurStyle {
-    return this.listImmersiveEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE;
   }
 
   private saveEnabled(key: string, enabled: boolean): void {
@@ -286,7 +277,7 @@ export struct CapabilityCenterView {
           Button('保存全局记忆').onClick((): void => this.save('capability_global_memory', this.globalMemory)).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
         }.alignItems(HorizontalAlign.Start).width('100%').padding(16);
       }
-    }.width('100%').backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(THEME_TOKENS.cardRadius).scrollBar(BarState.Off);
+    }.width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -304,7 +295,7 @@ export struct CapabilityCenterView {
           Button('启用自定义技能').onClick((): void => this.saveCustomSkill()).width('100%').height(42).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
         }.alignItems(HorizontalAlign.Start).width('100%').padding(16);
       }
-    }.width('100%').backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(THEME_TOKENS.cardRadius).scrollBar(BarState.Off);
+    }.width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -346,7 +337,7 @@ export struct CapabilityCenterView {
           }
         }.alignItems(HorizontalAlign.Start).width('100%').padding(16);
       }
-    }.width('100%').backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(THEME_TOKENS.cardRadius).scrollBar(BarState.Off);
+    }.width('100%').backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -360,7 +351,7 @@ export struct CapabilityCenterView {
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showMcpSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showMcpSettings, this.mcpSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showMcpSettings = false; } });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(THEME_TOKENS.cardRadius);
+      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('联网搜索').fontSize(17).fontWeight(FontWeight.Medium); Text('可选择服务商原生、本地或 API 搜索服务。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
@@ -369,7 +360,7 @@ export struct CapabilityCenterView {
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showSearchSettings = false; } });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(THEME_TOKENS.cardRadius);
+      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
@@ -378,7 +369,7 @@ export struct CapabilityCenterView {
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showImageSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showImageSettings, this.imageSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showImageSettings = false; } });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(THEME_TOKENS.cardRadius);
+      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
     }.width('100%');
   }
 

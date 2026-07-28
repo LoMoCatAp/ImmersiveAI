@@ -90,9 +90,6 @@ export struct MyView {
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   @StorageLink('appearance_color_mode') private appearanceColorMode: string = 'system';
   @StorageLink('appearance_page_background') private appearancePageBackground: string = '';
-  @StorageLink('immersive_nav_enabled') private navImmersiveEnabled: boolean = false;
-  @StorageLink('immersive_list_enabled') private listImmersiveEnabled: boolean = false;
-  @StorageLink('immersive_chat_enabled') private chatImmersiveEnabled: boolean = false;
   private pageStack: NavPathStack = new NavPathStack();
   private homeScroller: Scroller = new Scroller();
   private settingsScroller: Scroller = new Scroller();
@@ -311,20 +308,6 @@ export struct MyView {
     AppStorage.set('appearance_chat_text_size', `${size}`);
   }
 
-  private saveImmersiveSetting(key: string, enabled: boolean): void {
-    AppStore.saveAppearance(key, enabled ? 'true' : 'false');
-    AppStorage.setOrCreate(key, enabled);
-    AppStorage.set(key, enabled);
-  }
-
-  private listSurface(): ResourceColor {
-    return this.listImmersiveEnabled ? Color.Transparent : THEME_TOKENS.surface;
-  }
-
-  private listBlur(): BlurStyle {
-    return this.listImmersiveEnabled ? BlurStyle.COMPONENT_ULTRA_THICK : BlurStyle.NONE;
-  }
-
   private openOnboarding(): void {
     AppStore.saveOnboardingIntroStep(0);
     const revision: number = Date.now();
@@ -503,7 +486,7 @@ export struct MyView {
           Image($r('app.media.my_settings')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('设置').fontSize(17).fontWeight(FontWeight.Medium); Text('外观、聊天与沉浸光感').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Settings); }).clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 }).animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Settings); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
@@ -511,7 +494,7 @@ export struct MyView {
           Image($r('app.media.my_prompt')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('提示词与记忆').fontSize(17).fontWeight(FontWeight.Medium); Text('默认指令、长期偏好与本地记忆').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Prompt); }).clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 }).animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Prompt); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
@@ -519,7 +502,7 @@ export struct MyView {
           Image($r('app.media.my_skills')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('技能').fontSize(17).fontWeight(FontWeight.Medium); Text('写作、编程、学习与自定义工作流').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Skills); }).clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 }).animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Skills); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
@@ -527,7 +510,7 @@ export struct MyView {
           Image($r('app.media.my_knowledge')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('知识库').fontSize(17).fontWeight(FontWeight.Medium); Text('本地资料摘要与对话参考内容').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Knowledge); }).clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 }).animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Knowledge); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
@@ -535,7 +518,7 @@ export struct MyView {
           Image($r('app.media.my_tools')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('工具与扩展').fontSize(17).fontWeight(FontWeight.Medium); Text('MCP 服务、联网搜索与图像生成配置').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Tools); }).clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 }).animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Tools); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
@@ -543,9 +526,9 @@ export struct MyView {
           Image($r('app.media.my_about')).width(22).height(22).fillColor(THEME_TOKENS.primary);
           Column({ space: 3 }) { Text('关于').fontSize(17).fontWeight(FontWeight.Medium); Text('AIBox、版本与项目地址').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
-        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.About); }).clickEffect({ level: ClickEffectLevel.LIGHT, scale: this.listImmersiveEnabled ? 0.86 : 1 }).animation({ duration: this.listImmersiveEnabled ? 220 : 0, curve: Curve.Friction });
+        }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.About); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
       }
-    }.width('100%').height(408).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(18).scrollBar(BarState.Off);
+    }.width('100%').height(408).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -554,31 +537,19 @@ export struct MyView {
       ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_theme')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('主题色').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(ACCENT_OPTIONS)).selected(this.optionIndex(ACCENT_OPTIONS, this.accentColor)).value(this.labels(ACCENT_OPTIONS)[this.optionIndex(ACCENT_OPTIONS, this.accentColor)]).onSelect((index: number): void => this.selectAccent(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_display')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('显示模式').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(COLOR_MODE_OPTIONS)).selected(this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)).value(this.labels(COLOR_MODE_OPTIONS)[this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)]).onSelect((index: number): void => this.selectColorMode(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
-    }.width('100%').height(112).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(18).scrollBar(BarState.Off);
+    }.width('100%').height(112).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private chatAppearanceList(): void {
     List({ space: 0 }) {
       ListItem() { Column({ space: 6 }) { Row({ space: 12 }) { Image($r('app.media.setting_chat')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('聊天字号').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text(`${this.chatTextSize} vp`).fontColor(THEME_TOKENS.secondaryText); }.width('100%'); Slider({ value: this.chatTextSize, min: 12, max: 22, step: 1, style: SliderStyle.OutSet }).onChange((value: number): void => this.saveTextSize(value)).width('100%'); }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }); }
-      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-      ListItem() { Row({ space: 12 }) { Text('聊天气泡沉浸光感').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.chatImmersiveEnabled }).onChange((enabled: boolean): void => this.saveImmersiveSetting('immersive_chat_enabled', enabled)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
-    }.width('100%').height(142).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(18).scrollBar(BarState.Off);
+    }.width('100%').height(88).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private materialList(): void {
-    List({ space: 0 }) { ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_material')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('档位').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.materialLabels().map((label: string): SelectOption => ({ value: label }))).selected(this.materialIndex()).value(this.summary).onSelect((index: number): void => this.selectMaterial(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); } }.width('100%').height(56).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(18).scrollBar(BarState.Off);
-  }
-
-  @Builder
-  private immersiveControlsList(): void {
-    List({ space: 0 }) {
-      ListItem() { Row({ space: 12 }) { Text('导航栏沉浸光感').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.navImmersiveEnabled }).onChange((enabled: boolean): void => this.saveImmersiveSetting('immersive_nav_enabled', enabled)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
-      ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-      ListItem() { Row({ space: 12 }) { Text('管理列表沉浸光感').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Toggle({ type: ToggleType.Switch, isOn: this.listImmersiveEnabled }).onChange((enabled: boolean): void => this.saveImmersiveSetting('immersive_list_enabled', enabled)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
-    }.width('100%').height(114).backgroundColor(this.listSurface()).backgroundBlurStyle(this.listBlur()).borderRadius(18).scrollBar(BarState.Off);
+    List({ space: 0 }) { ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_material')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('档位').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.materialLabels().map((label: string): SelectOption => ({ value: label }))).selected(this.materialIndex()).value(this.summary).onSelect((index: number): void => this.selectMaterial(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); } }.width('100%').height(56).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -614,7 +585,6 @@ export struct MyView {
       this.chatAppearanceList();
       Text('沉浸光感').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 12 });
       this.materialList();
-      this.immersiveControlsList();
       Text('使用').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').margin({ top: 12 });
       this.guideList();
     }.width('100%');
@@ -743,7 +713,7 @@ export struct MyView {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop + 20, bottom: 132 })
+      .padding({ left: this.pagePadding, right: this.pagePadding, top: THEME_TOKENS.subpageContentTop, bottom: 132 })
       .backgroundColor(this.destinationBackground())
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
