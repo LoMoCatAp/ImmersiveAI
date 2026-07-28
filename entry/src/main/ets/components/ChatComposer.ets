@@ -3,6 +3,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 @Component
 export struct ChatComposer {
   @State inputText: string = '';
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @Prop isGenerating: boolean = false;
   @Prop hasAttachment: boolean = false;
   @Prop webSearchSupported: boolean = false;
@@ -20,14 +21,14 @@ export struct ChatComposer {
           .height(32)
           .fontSize(13)
           .backgroundColor(THEME_TOKENS.surface)
-          .fontColor(THEME_TOKENS.primary)
+          .fontColor(this.appearanceAccentColor)
           .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         Button('更多')
           .onClick(this.onMore)
           .height(32)
           .fontSize(13)
           .backgroundColor(THEME_TOKENS.surface)
-          .fontColor(THEME_TOKENS.primary)
+          .fontColor(this.appearanceAccentColor)
           .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         if (this.webSearchSupported) {
           Button('联网搜索')
@@ -35,17 +36,17 @@ export struct ChatComposer {
             .height(32)
             .fontSize(13)
             .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
-            .backgroundColor(this.webSearchEnabled ? THEME_TOKENS.primary : THEME_TOKENS.surface)
+            .backgroundColor(this.webSearchEnabled ? this.appearanceAccentColor : THEME_TOKENS.surface)
             .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         }
       }.width('100%');
     Row({ space: 8 }) {
        TextInput({ placeholder: '输入消息', text: this.inputText }).layoutWeight(1).height(44).onChange((value: string): void => { this.inputText = value; });
       if (this.isGenerating) {
-        Button() { Image($r('app.media.chat_close')).width(20).height(20).fillColor(THEME_TOKENS.primary); }
+        Button() { Image($r('app.media.chat_close')).width(20).height(20).fillColor(this.appearanceAccentColor); }
           .onClick(this.onStop).width(44).height(44).backgroundColor(THEME_TOKENS.surface).borderRadius(22).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
       } else {
-        Button() { Image($r('app.media.chat_send')).width(21).height(21).fillColor(THEME_TOKENS.primary); }
+        Button() { Image($r('app.media.chat_send')).width(21).height(21).fillColor(this.appearanceAccentColor); }
           .onClick((): void => { const value: string = this.inputText.trim(); if (value.length > 0 || this.hasAttachment) { this.onSend(value); this.inputText = ''; } })
           .width(44).height(44).backgroundColor(THEME_TOKENS.surface).borderRadius(22).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
       }

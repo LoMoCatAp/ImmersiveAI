@@ -6,6 +6,7 @@ export struct MaterialSettings {
   @Prop options: Array<MaterialOption> = [];
   @Prop selected: MaterialLevel = MaterialLevel.Gentle;
   @Prop status: string = '';
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   onSelect: (level: MaterialLevel) => void = (_level: MaterialLevel): void => {};
 
   build() {
@@ -17,7 +18,7 @@ export struct MaterialSettings {
           .onClick((): void => { this.onSelect(option.level); })
           .height(THEME_TOKENS.touchTarget)
           .width('100%')
-          .backgroundColor(option.level === this.selected ? THEME_TOKENS.primary : THEME_TOKENS.surface)
+          .backgroundColor(option.level === this.selected ? this.appearanceAccentColor : THEME_TOKENS.surface)
           .fontColor(option.level === this.selected ? THEME_TOKENS.primaryText : THEME_TOKENS.secondaryText)
           .enabled(option.available)
           .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });

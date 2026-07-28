@@ -346,7 +346,7 @@ export struct MyView {
         Stack() {
           Image($r('app.media.background')).width(52).height(52).objectFit(ImageFit.Cover);
           Image($r('app.media.foreground')).width(52).height(52).objectFit(ImageFit.Cover);
-        }.width(52).height(52).borderRadius(16).clip(true).backgroundColor(THEME_TOKENS.primary);
+        }.width(52).height(52).borderRadius(16).clip(true).backgroundColor(this.accentColor);
         Column({ space: 4 }) {
           Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold);
           Text(`当前版本 v${this.appVersion.length > 0 ? this.appVersion : CHANGELOG_ENTRIES[0].version}`)
@@ -427,7 +427,7 @@ export struct MyView {
                 .width(12)
                 .height(12)
                 .borderRadius(3)
-                .backgroundColor(THEME_TOKENS.primary)
+                .backgroundColor(this.accentColor)
                 .opacity(this.heatOpacity(cell.level))
                 .scale({ x: this.heatEntered ? 1 : 0.55, y: this.heatEntered ? 1 : 0.55 })
                 .animation({ duration: 260, delay: (weekIndex * 7 + dayIndex) * 10, curve: Curve.EaseOut })
@@ -440,7 +440,7 @@ export struct MyView {
       Row() {
         Text('少').fontSize(11).fontColor(THEME_TOKENS.secondaryText);
         Row({ space: 3 }) {
-          ForEach([0, 1, 2, 3, 4], (level: number) => { Text('').width(10).height(10).borderRadius(2).backgroundColor(THEME_TOKENS.primary).opacity(this.heatOpacity(level)); });
+          ForEach([0, 1, 2, 3, 4], (level: number) => { Text('').width(10).height(10).borderRadius(2).backgroundColor(this.accentColor).opacity(this.heatOpacity(level)); });
         };
         Text('多').fontSize(11).fontColor(THEME_TOKENS.secondaryText);
       }.width('100%').justifyContent(FlexAlign.End);
@@ -483,7 +483,7 @@ export struct MyView {
     List({ space: 0 }) {
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.my_settings')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.my_settings')).width(22).height(22).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('设置').fontSize(17).fontWeight(FontWeight.Medium); Text('外观、聊天与沉浸光感').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Settings); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -491,7 +491,7 @@ export struct MyView {
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.my_prompt')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.my_prompt')).width(22).height(22).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('提示词与记忆').fontSize(17).fontWeight(FontWeight.Medium); Text('默认指令、长期偏好与本地记忆').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Prompt); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -499,7 +499,7 @@ export struct MyView {
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.my_skills')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.my_skills')).width(22).height(22).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('技能').fontSize(17).fontWeight(FontWeight.Medium); Text('写作、编程、学习与自定义工作流').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Skills); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -507,7 +507,7 @@ export struct MyView {
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.my_knowledge')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.my_knowledge')).width(22).height(22).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('知识库').fontSize(17).fontWeight(FontWeight.Medium); Text('本地资料摘要与对话参考内容').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Knowledge); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -515,7 +515,7 @@ export struct MyView {
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.my_tools')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.my_tools')).width(22).height(22).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('工具与扩展').fontSize(17).fontWeight(FontWeight.Medium); Text('MCP 服务、联网搜索与图像生成配置').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.Tools); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -523,7 +523,7 @@ export struct MyView {
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.my_about')).width(22).height(22).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.my_about')).width(22).height(22).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('关于').fontSize(17).fontWeight(FontWeight.Medium); Text('AIBox、版本与项目地址').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.navigateTo(MySection.About); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -534,22 +534,22 @@ export struct MyView {
   @Builder
   private appearanceList(): void {
     List({ space: 0 }) {
-      ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_theme')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('主题色').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(ACCENT_OPTIONS)).selected(this.optionIndex(ACCENT_OPTIONS, this.accentColor)).value(this.labels(ACCENT_OPTIONS)[this.optionIndex(ACCENT_OPTIONS, this.accentColor)]).onSelect((index: number): void => this.selectAccent(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
+      ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_theme')).width(20).height(20).fillColor(this.accentColor); Text('主题色').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(ACCENT_OPTIONS)).selected(this.optionIndex(ACCENT_OPTIONS, this.accentColor)).value(this.labels(ACCENT_OPTIONS)[this.optionIndex(ACCENT_OPTIONS, this.accentColor)]).onSelect((index: number): void => this.selectAccent(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
       ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-      ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_display')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('显示模式').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(COLOR_MODE_OPTIONS)).selected(this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)).value(this.labels(COLOR_MODE_OPTIONS)[this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)]).onSelect((index: number): void => this.selectColorMode(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
+      ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_display')).width(20).height(20).fillColor(this.accentColor); Text('显示模式').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.selectOptions(COLOR_MODE_OPTIONS)).selected(this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)).value(this.labels(COLOR_MODE_OPTIONS)[this.optionIndex(COLOR_MODE_OPTIONS, this.colorMode)]).onSelect((index: number): void => this.selectColorMode(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); }
     }.width('100%').height(112).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private chatAppearanceList(): void {
     List({ space: 0 }) {
-      ListItem() { Column({ space: 6 }) { Row({ space: 12 }) { Image($r('app.media.setting_chat')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('聊天字号').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text(`${this.chatTextSize} vp`).fontColor(THEME_TOKENS.secondaryText); }.width('100%'); Slider({ value: this.chatTextSize, min: 12, max: 22, step: 1, style: SliderStyle.OutSet }).onChange((value: number): void => this.saveTextSize(value)).width('100%'); }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }); }
+      ListItem() { Column({ space: 6 }) { Row({ space: 12 }) { Image($r('app.media.setting_chat')).width(20).height(20).fillColor(this.accentColor); Text('聊天字号').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text(`${this.chatTextSize} vp`).fontColor(THEME_TOKENS.secondaryText); }.width('100%'); Slider({ value: this.chatTextSize, min: 12, max: 22, step: 1, style: SliderStyle.OutSet }).onChange((value: number): void => this.saveTextSize(value)).width('100%'); }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }); }
     }.width('100%').height(88).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
   private materialList(): void {
-    List({ space: 0 }) { ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_material')).width(20).height(20).fillColor(THEME_TOKENS.primary); Text('档位').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.materialLabels().map((label: string): SelectOption => ({ value: label }))).selected(this.materialIndex()).value(this.summary).onSelect((index: number): void => this.selectMaterial(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); } }.width('100%').height(56).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
+    List({ space: 0 }) { ListItem() { Row({ space: 12 }) { Image($r('app.media.setting_material')).width(20).height(20).fillColor(this.accentColor); Text('档位').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Select(this.materialLabels().map((label: string): SelectOption => ({ value: label }))).selected(this.materialIndex()).value(this.summary).onSelect((index: number): void => this.selectMaterial(index)); }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }); } }.width('100%').height(56).backgroundColor(THEME_TOKENS.surface).borderRadius(18).scrollBar(BarState.Off);
   }
 
   @Builder
@@ -557,7 +557,7 @@ export struct MyView {
     List({ space: 0 }) {
       ListItem() {
         Row({ space: 12 }) {
-          Image($r('app.media.setting_guide')).width(20).height(20).fillColor(THEME_TOKENS.primary);
+          Image($r('app.media.setting_guide')).width(20).height(20).fillColor(this.accentColor);
           Column({ space: 3 }) { Text('使用引导').fontSize(17).fontWeight(FontWeight.Medium); Text('重新查看服务商配置与隐私说明').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Text('›').fontSize(24).fontColor(THEME_TOKENS.secondaryText);
         }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 }).onClick((): void => { this.openOnboarding(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 });
@@ -597,9 +597,9 @@ export struct MyView {
       List({ space: 0 }) {
         ListItem() { Column({ space: 5 }) { Text('AIBox').fontSize(20).fontWeight(FontWeight.Bold).width('100%'); Text('作者：LomoCat').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); Text(`版本：${this.appVersion.length > 0 ? this.appVersion : '读取中'}`).fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%'); }.width('100%').padding(16); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-        ListItem() { Row() { Text('GitHub').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('github.com/LoMoCatAp/ImmersiveAI').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openGitHub()); }
+        ListItem() { Row() { Text('GitHub').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('github.com/LoMoCatAp/ImmersiveAI').fontSize(13).fontColor(this.accentColor); }.width('100%').padding(16).onClick((): void => this.openGitHub()); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
-        ListItem() { Row() { Text('爱发电').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('ifdian.net/a/lomocat').fontSize(13).fontColor(THEME_TOKENS.primary); }.width('100%').padding(16).onClick((): void => this.openAfdian()); }
+        ListItem() { Row() { Text('爱发电').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1); Text('ifdian.net/a/lomocat').fontSize(13).fontColor(this.accentColor); }.width('100%').padding(16).onClick((): void => this.openAfdian()); }
         ListItem() { Divider().margin({ left: 16, right: 16 }); }.height(1);
         ListItem() {
           Row() {

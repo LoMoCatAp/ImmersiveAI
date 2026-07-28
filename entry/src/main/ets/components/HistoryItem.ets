@@ -5,6 +5,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 export struct HistoryItem {
   @Prop item: ConversationRecord = { id: '', title: '', providerId: '', modelName: '', status: MessageStatus.Completed, createdAt: 0, updatedAt: 0 };
   @Prop selected: boolean = false;
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   onOpen: () => void = (): void => {};
   onExport: () => void = (): void => {};
   onDelete: () => void = (): void => {};
@@ -23,7 +24,7 @@ export struct HistoryItem {
         .width(3)
         .height(40)
         .borderRadius(2)
-        .backgroundColor(THEME_TOKENS.primary)
+        .backgroundColor(this.appearanceAccentColor)
         .opacity(this.selected ? 1 : 0);
       Column({ space: 5 }) {
         Text(this.item.title.length > 0 ? this.item.title : '未命名会话')
@@ -43,7 +44,7 @@ export struct HistoryItem {
         }.width('100%');
       }.alignItems(HorizontalAlign.Start).layoutWeight(1);
       Button({ type: ButtonType.Circle }) {
-        Image($r('app.media.history_more')).width(20).height(20).fillColor(THEME_TOKENS.primary);
+        Image($r('app.media.history_more')).width(20).height(20).fillColor(this.appearanceAccentColor);
       }
         .width(40)
         .height(40)

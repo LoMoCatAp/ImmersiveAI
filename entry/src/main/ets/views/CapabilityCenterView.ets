@@ -59,6 +59,7 @@ export struct CapabilityCenterView {
   @State private knowledgeNoteTitle: string = '';
   @State private knowledgeNoteContent: string = '';
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   private contentScroller: Scroller = new Scroller();
   private readonly webSearchService: WebSearchService = new WebSearchService();
 
@@ -243,10 +244,10 @@ export struct CapabilityCenterView {
   @Builder
   private sectionTitle(title: string, detail: string): void {
     Row({ space: 8 }) {
-      if (this.page === 'prompt') Image($r('app.media.my_prompt')).width(20).height(20).fillColor(THEME_TOKENS.primary);
-      else if (this.page === 'skills') Image($r('app.media.my_skills')).width(20).height(20).fillColor(THEME_TOKENS.primary);
-      else if (this.page === 'knowledge') Image($r('app.media.my_knowledge')).width(20).height(20).fillColor(THEME_TOKENS.primary);
-      else Image($r('app.media.my_tools')).width(20).height(20).fillColor(THEME_TOKENS.primary);
+      if (this.page === 'prompt') Image($r('app.media.my_prompt')).width(20).height(20).fillColor(this.appearanceAccentColor);
+      else if (this.page === 'skills') Image($r('app.media.my_skills')).width(20).height(20).fillColor(this.appearanceAccentColor);
+      else if (this.page === 'knowledge') Image($r('app.media.my_knowledge')).width(20).height(20).fillColor(this.appearanceAccentColor);
+      else Image($r('app.media.my_tools')).width(20).height(20).fillColor(this.appearanceAccentColor);
       Column({ space: 3 }) {
         Text(title).fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%');
         Text(detail).fontSize(12).fontColor(THEME_TOKENS.secondaryText).opacity(0.76).width('100%');
@@ -347,7 +348,7 @@ export struct CapabilityCenterView {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('MCP 工具服务').fontSize(17).fontWeight(FontWeight.Medium); Text('保存远程 Streamable HTTP 或 SSE 配置；工具发现与执行将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Toggle({ type: ToggleType.Switch, isOn: this.mcpEnabled }).onChange((enabled: boolean): void => { this.mcpEnabled = enabled; this.saveEnabledSilently('capability_mcp_enabled', enabled); this.showMcpSettings = enabled; });
-          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.mcpEnabled ? 1 : 0.32); }
+          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(this.appearanceAccentColor).opacity(this.mcpEnabled ? 1 : 0.32); }
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showMcpSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showMcpSettings, this.mcpSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showMcpSettings = false; } });
         }.width('100%');
@@ -356,7 +357,7 @@ export struct CapabilityCenterView {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('联网搜索').fontSize(17).fontWeight(FontWeight.Medium); Text('可选择服务商原生、本地或 API 搜索服务。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Toggle({ type: ToggleType.Switch, isOn: this.webSearchEnabled }).onChange((enabled: boolean): void => { this.webSearchEnabled = enabled; this.saveEnabledSilently('capability_web_search_enabled', enabled); this.showSearchSettings = enabled; });
-          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.webSearchEnabled ? 1 : 0.32); }
+          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(this.appearanceAccentColor).opacity(this.webSearchEnabled ? 1 : 0.32); }
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showSearchSettings = false; } });
         }.width('100%');
@@ -365,7 +366,7 @@ export struct CapabilityCenterView {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
           Toggle({ type: ToggleType.Switch, isOn: this.imageEnabled }).onChange((enabled: boolean): void => { this.imageEnabled = enabled; this.saveEnabledSilently('capability_image_enabled', enabled); this.showImageSettings = enabled; });
-          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(THEME_TOKENS.primary).opacity(this.imageEnabled ? 1 : 0.32); }
+          Button({ type: ButtonType.Circle }) { Image($r('app.media.my_settings')).width(18).height(18).fillColor(this.appearanceAccentColor).opacity(this.imageEnabled ? 1 : 0.32); }
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showImageSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showImageSettings, this.imageSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showImageSettings = false; } });
         }.width('100%');
@@ -419,7 +420,7 @@ export struct CapabilityCenterView {
     Column({ space: 12 }) {
       this.sectionTitle('提示词与记忆', '默认提示词和全局记忆会在下一条消息中生效。');
       this.systemList();
-      Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').height(49).padding({ top: 4, bottom: 32 }).opacity(this.savedMessage.length > 0 ? 1 : 0);
+      Text(this.savedMessage).fontSize(13).fontColor(this.appearanceAccentColor).width('100%').height(49).padding({ top: 4, bottom: 32 }).opacity(this.savedMessage.length > 0 ? 1 : 0);
     }.width('100%').translate({ y: PROMPT_MEMORY_CONTENT_OFFSET });
   }
 
@@ -428,7 +429,7 @@ export struct CapabilityCenterView {
     Column({ space: 12 }) {
       this.sectionTitle('技能', '为当前对话附加一组可复用的工作指令。');
       this.skillList();
-      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(this.appearanceAccentColor).width('100%').padding({ top: 4, bottom: 32 });
     }.width('100%').translate({ y: SKILLS_CONTENT_OFFSET });
   }
 
@@ -437,7 +438,7 @@ export struct CapabilityCenterView {
     Column({ space: 12 }) {
       this.sectionTitle('知识库', '本地资料摘要会按需注入对话上下文。');
       this.knowledgeList();
-      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(THEME_TOKENS.primary).width('100%').padding({ top: 4, bottom: 32 });
+      if (this.savedMessage.length > 0) Text(this.savedMessage).fontSize(13).fontColor(this.appearanceAccentColor).width('100%').padding({ top: 4, bottom: 32 });
     }.width('100%').translate({ y: KNOWLEDGE_CONTENT_OFFSET });
   }
 

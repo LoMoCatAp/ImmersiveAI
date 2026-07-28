@@ -2,6 +2,7 @@ import { NavigationIntent, NavigationSource, ShellTab } from '../model/ShellMode
 import { THEME_TOKENS } from '../common/ThemeTokens';
 @Component export struct MainNavigation {
   @Prop selectedTab: ShellTab = ShellTab.Chat;
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   onSelect: (intent: NavigationIntent) => void = (_intent: NavigationIntent): void => {};
   @Builder
   private tabButton(label: string, tab: ShellTab): void {
@@ -13,7 +14,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
       .width('100%')
       .layoutWeight(1)
       .textAlign(TextAlign.Center)
-      .fontColor(this.selectedTab === tab ? THEME_TOKENS.primary : THEME_TOKENS.secondaryText)
+      .fontColor(this.selectedTab === tab ? this.appearanceAccentColor : THEME_TOKENS.secondaryText)
       .backgroundColor('#00000000');
   }
   build() {

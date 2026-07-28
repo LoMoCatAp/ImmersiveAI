@@ -217,9 +217,9 @@ export struct ChatView {
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .layoutWeight(1);
-                Text('打开').fontSize(12).fontColor(THEME_TOKENS.primary);
+                Text('打开').fontSize(12).fontColor(this.appearanceAccentColor);
               }.width('100%');
-              Text(this.sourceHost(source.url)).fontSize(11).fontColor(THEME_TOKENS.primary).width('100%').maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis });
+              Text(this.sourceHost(source.url)).fontSize(11).fontColor(this.appearanceAccentColor).width('100%').maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis });
               if (source.snippet.length > 0) Text(source.snippet).fontSize(12).fontColor(THEME_TOKENS.secondaryText).width('100%').maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis });
             }.alignItems(HorizontalAlign.Start).width('100%');
           }
@@ -523,7 +523,7 @@ export struct ChatView {
   private moreSheet(): void {
     Column({ space: 12 }) {
       Text('会话设置').fontSize(20).fontWeight(FontWeight.Bold).width('100%');
-      Row({ space: 8 }) { Image($r('app.media.menu_model')).width(18).height(18).fillColor(THEME_TOKENS.primary); Text('模型').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
+      Row({ space: 8 }) { Image($r('app.media.menu_model')).width(18).height(18).fillColor(this.appearanceAccentColor); Text('模型').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       Row({ space: 8 }) {
         Button('刷新可用模型').onClick((): void => { void this.refreshModels(); }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
         if (this.modelDiscoveryMessage.length > 0) Text(this.modelDiscoveryMessage).layoutWeight(1).fontSize(13).fontColor(THEME_TOKENS.secondaryText);
@@ -532,9 +532,9 @@ export struct ChatView {
         Select(this.modelOptions()).selected(this.modelIndex()).value(this.availableModels[this.modelIndex()]).onSelect((index: number): void => { this.modelOverride = this.availableModels[index]; }).height(48).menuAlign(MenuAlignType.START, { dx: 0, dy: 52 }).width('100%');
       }
       TextInput({ placeholder: '模型名称，也可直接输入自定义模型', text: this.modelOverride }).onChange((value: string): void => { this.modelOverride = value; });
-      Row({ space: 8 }) { Image($r('app.media.menu_context')).width(18).height(18).fillColor(THEME_TOKENS.primary); Text('上下文消息数').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
+      Row({ space: 8 }) { Image($r('app.media.menu_context')).width(18).height(18).fillColor(this.appearanceAccentColor); Text('上下文消息数').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       TextInput({ placeholder: '0 为全部上下文', text: this.contextCount }).type(InputType.Number).onChange((value: string): void => { this.contextCount = value; });
-      Row({ space: 8 }) { Image($r('app.media.menu_assistant')).width(18).height(18).fillColor(THEME_TOKENS.primary); Text('助手名称').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
+      Row({ space: 8 }) { Image($r('app.media.menu_assistant')).width(18).height(18).fillColor(this.appearanceAccentColor); Text('助手名称').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       TextInput({ placeholder: '助手', text: this.assistantName }).onChange((value: string): void => { this.assistantName = value; });
       Button('保存').onClick((): void => { this.saveMoreSettings(); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
     }.padding(20).width('100%').backgroundColor(THEME_TOKENS.surface);
