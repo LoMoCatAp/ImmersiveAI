@@ -3,6 +3,7 @@ import { ProviderPresets } from '../service/ProviderPresets';
 import { ProviderRegistry } from '../service/ProviderRegistry';
 import { THEME_TOKENS } from '../common/ThemeTokens';
 import { ModelDiscoveryResult } from '../service/ModelDiscoveryService';
+import { uiMaterial } from '@kit.ArkUI';
 
 const PROVIDER_KINDS: ProviderKind[] = [ProviderKind.OpenAICompatible, ProviderKind.OpenAI, ProviderKind.DeepSeek, ProviderKind.Kimi, ProviderKind.Qwen, ProviderKind.GLM, ProviderKind.Anthropic, ProviderKind.Gemini];
 const PROVIDER_OPTIONS: SelectOption[] = [{ value: 'OpenAI compatible' }, { value: 'OpenAI' }, { value: 'DeepSeek' }, { value: 'Kimi' }, { value: 'Qwen' }, { value: 'ZHIPU AI' }, { value: 'Anthropic Claude' }, { value: 'Google Gemini' }];
@@ -23,9 +24,20 @@ export struct ProviderEditor {
   @Prop existingId: string = '';
   @Prop initialDraft: ProviderDraft | undefined = undefined;
   @Prop showOnboardingGuide: boolean = false;
+  @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   onSave: (draft: ProviderDraft, id: string) => void = (_draft: ProviderDraft, _id: string): void => {};
   onCancel: () => void = (): void => {};
   onDiscoverModels: (draft: ProviderDraft, id: string) => Promise<ModelDiscoveryResult> = async (_draft: ProviderDraft, _id: string): Promise<ModelDiscoveryResult> => ({ models: [], message: '' });
+
+  private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
+    return new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.THIN,
+      materialColor: Color.Transparent,
+      applyShadow: false,
+      interactive: true,
+      lightEffect: { color: this.appearanceAccentColor }
+    });
+  }
 
   aboutToAppear(): void {
     const draft: ProviderDraft | undefined = this.initialDraft;
@@ -72,10 +84,10 @@ export struct ProviderEditor {
     Column({ space: 10 }) {
         Text(this.existingId.length > 0 ? '编辑供应商' : '新增供应商').fontSize(22).fontWeight(FontWeight.Bold);
         Text('服务商模板').fontSize(14);
-        Select(PROVIDER_OPTIONS).selected(this.kindIndex()).value(PROVIDER_OPTIONS[this.kindIndex()].value).onSelect((index: number, _value: string): void => this.applyPreset(PROVIDER_KINDS[index])).width('100%');
+        Select(PROVIDER_OPTIONS).selected(this.kindIndex()).value(PROVIDER_OPTIONS[this.kindIndex()].value).onSelect((index: number, _value: string): void => this.applyPreset(PROVIDER_KINDS[index])).width('100%').backgroundColor(Color.Transparent).fontColor(this.appearanceAccentColor).systemMaterial(this.immersiveMaterial());
         if (this.canSelectProtocol()) {
           Text('接口协议').fontSize(14);
-          Select(PROTOCOL_OPTIONS).selected(this.protocolIndex()).value(PROTOCOL_OPTIONS[this.protocolIndex()].value).onSelect((index: number): void => { this.protocol = PROTOCOLS[index]; }).width('100%');
+          Select(PROTOCOL_OPTIONS).selected(this.protocolIndex()).value(PROTOCOL_OPTIONS[this.protocolIndex()].value).onSelect((index: number): void => { this.protocol = PROTOCOLS[index]; }).width('100%').backgroundColor(Color.Transparent).fontColor(this.appearanceAccentColor).systemMaterial(this.immersiveMaterial());
         }
         TextInput({ placeholder: '供应商名称', text: this.name }).onChange((value: string): void => { this.name = value; });
         TextInput({ placeholder: '服务地址，例如 https://api.example.com（可省略 /v1 和接口路径）', text: this.endpoint })
@@ -85,17 +97,17 @@ export struct ProviderEditor {
           Column({ space: 4 }) {
             Text('地址填写提示').fontSize(14).fontWeight(FontWeight.Medium);
             Text(this.endpointGuide()).fontSize(13).lineHeight(20).fontColor(THEME_TOKENS.secondaryText).width('100%');
-          }.width('100%').padding(12).backgroundColor(THEME_TOKENS.surface).borderRadius(12).alignItems(HorizontalAlign.Start);
+          }.width('100%').padding(12).backgroundColor(Color.Transparent).borderRadius(16).systemMaterial(this.immersiveMaterial()).alignItems(HorizontalAlign.Start);
         }
         TextInput({ placeholder: '密钥（更新时可留空）', text: this.credentialInput }).type(InputType.Password).onChange((value: string): void => { this.credentialInput = value; });
         Row({ space: 8 }) {
           Text('模型').fontSize(14).fontWeight(FontWeight.Medium).layoutWeight(1);
-          Button(this.isDiscoveringModels ? '正在获取' : '刷新可用模型').onClick((): void => { void this.refreshModels(); }).enabled(!this.isDiscoveringModels).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+          Button(this.isDiscoveringModels ? '正在获取' : '刷新可用模型').onClick((): void => { void this.refreshModels(); }).enabled(!this.isDiscoveringModels).fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
         }.width('100%');
         TextInput({ placeholder: '模型名称，可刷新获取或手动填写', text: this.model }).onChange((value: string): void => { this.model = value; });
-        if (this.availableModels.length > 0) Select(this.modelOptions()).selected(this.modelIndex()).value(this.model).onSelect((index: number): void => { const selected: string | undefined = this.availableModels[index]; if (selected !== undefined) this.model = selected; }).width('100%');
+        if (this.availableModels.length > 0) Select(this.modelOptions()).selected(this.modelIndex()).value(this.model).onSelect((index: number): void => { const selected: string | undefined = this.availableModels[index]; if (selected !== undefined) this.model = selected; }).width('100%').backgroundColor(Color.Transparent).fontColor(this.appearanceAccentColor).systemMaterial(this.immersiveMaterial());
         if (this.modelDiscoveryMessage.length > 0) Text(this.modelDiscoveryMessage).fontSize(13).fontColor(THEME_TOKENS.secondaryText).width('100%');
-        Row({ space: 8 }) { Button('保存供应商').onClick((): void => this.save()).height(48).layoutWeight(1).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('取消编辑').onClick((): void => this.onCancel()).height(48).layoutWeight(1).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }.width('100%');
+        Row({ space: 8 }) { Button('保存供应商').onClick((): void => this.save()).height(48).layoutWeight(1).fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('取消编辑').onClick((): void => this.onCancel()).height(48).layoutWeight(1).fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }.width('100%');
     }.padding({ bottom: 24, top: 20 }).width('100%').transition(TransitionEffect.OPACITY.combine(TransitionEffect.scale({ x: 0.97, y: 0.97 })).animation({ duration: 220, curve: Curve.EaseOut }));
   }
 }

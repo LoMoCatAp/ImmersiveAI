@@ -69,7 +69,7 @@ export struct ChatView {
   private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
     return new uiMaterial.ImmersiveMaterial({
       style: uiMaterial.ImmersiveStyle.REGULAR,
-      materialColor: `${this.appearanceAccentColor}1C`,
+      materialColor: Color.Transparent,
       applyShadow: true,
       interactive: true,
       lightEffect: { color: this.appearanceAccentColor }
@@ -236,7 +236,7 @@ export struct ChatView {
           }
           .width('100%')
           .padding({ left: 10, right: 10, top: 8, bottom: 8 })
-          .backgroundColor(THEME_TOKENS.surface)
+          .backgroundColor(Color.Transparent)
           .borderRadius(12)
           .systemMaterial(this.immersiveMaterial())
           .onClick((): void => this.openSearchSource(source.url))
@@ -549,7 +549,7 @@ export struct ChatView {
       Row({ space: 8 }) { Image($r('app.media.menu_assistant')).width(18).height(18).fillColor(this.appearanceAccentColor); Text('助手名称').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       TextInput({ placeholder: '助手', text: this.assistantName }).onChange((value: string): void => { this.assistantName = value; });
       Button('保存').onClick((): void => { this.saveMoreSettings(); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
-    }.padding(20).width('100%').backgroundColor(THEME_TOKENS.surface).systemMaterial(this.immersiveMaterial());
+    }.padding(20).width('100%').backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial());
   }
 
   build() {

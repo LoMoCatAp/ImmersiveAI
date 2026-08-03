@@ -14,7 +14,7 @@ export struct HistoryItem {
   private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
     return new uiMaterial.ImmersiveMaterial({
       style: uiMaterial.ImmersiveStyle.THIN,
-      materialColor: `${this.appearanceAccentColor}1C`,
+      materialColor: Color.Transparent,
       applyShadow: false,
       interactive: true,
       lightEffect: { color: this.appearanceAccentColor }
@@ -68,9 +68,9 @@ export struct HistoryItem {
         .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.86 });
     }
       .width('100%')
-      .padding({ left: 14, right: 8, top: 12, bottom: 12 })
+      .padding({ left: 16, right: 10, top: 13, bottom: 13 })
       .backgroundColor(this.selected ? $r('app.color.selection_surface') : Color.Transparent)
-      .borderRadius(12)
+      .borderRadius(18)
       .systemMaterial(this.immersiveMaterial())
       .onClick(this.onOpen)
       .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.98 });

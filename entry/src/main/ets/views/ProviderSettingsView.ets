@@ -7,6 +7,7 @@ import { THEME_TOKENS } from '../common/ThemeTokens';
 import { ImportService } from '../service/ImportService';
 import { ShellTab } from '../model/ShellModels';
 import { promptAction } from '@kit.ArkUI';
+import { uiMaterial } from '@kit.ArkUI';
 import { OnboardingStepBanner } from '../components/OnboardingStepBanner';
 import { ModelDiscoveryResult } from '../service/ModelDiscoveryService';
 
@@ -24,6 +25,15 @@ export struct ProviderSettingsView {
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   @StorageLink('layout_page_padding') private pagePadding: number = THEME_TOKENS.pagePadding;
   onReturnChat: () => void = (): void => {};
+  private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
+    return new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.THIN,
+      materialColor: Color.Transparent,
+      applyShadow: false,
+      interactive: true,
+      lightEffect: { color: this.appearanceAccentColor }
+    });
+  }
   aboutToAppear(): void { this.providers = AppStore.providerViewModel.records; this.resetTransientState(); if (this.onboardingFlowStage === 'provider_setup') this.beginOnboardingProviderSetup(); void this.refresh(); }
   private onShellTabChanged(): void {
     this.resetTransientState();
@@ -169,17 +179,18 @@ export struct ProviderSettingsView {
          .height(40)
          .fontColor(this.appearanceAccentColor)
          .backgroundColor(Color.Transparent)
+         .systemMaterial(this.immersiveMaterial())
          .onClick((): void => { this.deferOnboarding(); })
          .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
        if (this.editingId.length > 0 || this.editingDraft !== undefined) {
          ProviderEditor({ existingId: this.editingId, initialDraft: this.editingDraft, showOnboardingGuide: this.onboardingFlowStage === 'provider_setup', onSave: (draft: ProviderDraft, id: string): void => { void this.save(draft, id); }, onDiscoverModels: (draft: ProviderDraft, id: string): Promise<ModelDiscoveryResult> => this.discoverEditorModels(draft, id), onCancel: (): void => { this.editingId = ''; this.editingDraft = undefined; AppStore.providerViewModel.cancelEdit(); } });
        } else {
-         Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+         Button('新增供应商').onClick((): void => { this.editingId = ''; this.editingDraft = { displayName: 'OpenAI compatible', providerKind: ProviderKind.OpenAICompatible, protocolStyle: ProtocolStyle.OpenAI, endpoint: '', modelName: '', credential: '' }; }).height(THEME_TOKENS.touchTarget).fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
          TextInput({ placeholder: '粘贴供应商 JSON 进行预览', text: this.importText }).onChange((value: string): void => { this.importText = value; });
-         Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; this.cancelImport(); }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
+         Row({ space: 8 }) { Button('预览导入').onClick((): void => { this.previewImport(); }).fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); Button('清空').onClick((): void => { this.importText = ''; this.cancelImport(); }).fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 }); }
          if (this.importPreview !== undefined) ImportPreview({ preview: this.importPreview, onConfirm: (): void => { void this.confirmImport(); }, onCancel: (): void => { this.cancelImport(); }, onClear: (): void => { this.importText = ''; this.cancelImport(); } });
        }
-      if (this.onboardingFlowStage === 'provider_test' && this.onboardingProvider() !== undefined) Button('测试引导中的供应商').onClick((): void => { const provider: ProviderRecord | undefined = this.onboardingProvider(); if (provider !== undefined) void this.test(provider); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
+      if (this.onboardingFlowStage === 'provider_test' && this.onboardingProvider() !== undefined) Button('测试引导中的供应商').onClick((): void => { const provider: ProviderRecord | undefined = this.onboardingProvider(); if (provider !== undefined) void this.test(provider); }).height(THEME_TOKENS.touchTarget).width('100%').fontColor(this.appearanceAccentColor).backgroundColor(Color.Transparent).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
       if (AppStore.providerViewModel.errorMessage.length > 0) Text(AppStore.providerViewModel.errorMessage).fontColor(THEME_TOKENS.danger);
       ForEach(this.providers, (provider: ProviderRecord) => {
         Column() {

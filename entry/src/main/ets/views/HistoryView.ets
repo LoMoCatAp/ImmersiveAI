@@ -122,7 +122,7 @@ export struct HistoryView {
         EmptyState({ title: '暂无会话', detail: '本地会话会显示在这里。' });
       } else {
         Text('会话').fontSize(14).fontColor(THEME_TOKENS.secondaryText).width('100%').padding({ top: 4, bottom: 2 });
-        List({ space: 0 }) {
+        List({ space: 6 }) {
           ForEach(this.conversations, (item: ConversationRecord, index: number) => {
             ListItem() {
               HistoryItem({
@@ -133,13 +133,13 @@ export struct HistoryView {
                 onDelete: (): void => { this.remove(item); }
               });
             }
-            if (index < this.conversations.length - 1) ListItem() { Divider().margin({ left: 18, right: 18 }); }.height(1);
           }, (item: ConversationRecord): string => item.id);
         }
         .layoutWeight(1)
         .width('100%')
+        .padding(6)
         .backgroundColor(THEME_TOKENS.surface)
-        .borderRadius(THEME_TOKENS.cardRadius)
+        .borderRadius(24)
         .scrollBar(BarState.Auto)
         .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
       }
