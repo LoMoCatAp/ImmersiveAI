@@ -1,4 +1,5 @@
 import { THEME_TOKENS } from '../common/ThemeTokens';
+import { uiMaterial } from '@kit.ArkUI';
 
 @Component
 export struct ChatComposer {
@@ -13,6 +14,17 @@ export struct ChatComposer {
   onMore: () => void = (): void => {};
   onOpenAttachmentMenu: () => void = (): void => {};
   onToggleWebSearch: () => void = (): void => {};
+
+  private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
+    return new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.THIN,
+      materialColor: `${this.appearanceAccentColor}24`,
+      applyShadow: false,
+      interactive: true,
+      lightEffect: { color: this.appearanceAccentColor }
+    });
+  }
+
   build() {
     Column({ space: 6 }) {
       Row({ space: 8 }) {
@@ -22,6 +34,7 @@ export struct ChatComposer {
           .fontSize(13)
           .backgroundColor(THEME_TOKENS.surface)
           .fontColor(this.appearanceAccentColor)
+          .systemMaterial(this.immersiveMaterial())
           .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         Button('更多')
           .onClick(this.onMore)
@@ -29,6 +42,7 @@ export struct ChatComposer {
           .fontSize(13)
           .backgroundColor(THEME_TOKENS.surface)
           .fontColor(this.appearanceAccentColor)
+          .systemMaterial(this.immersiveMaterial())
           .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         if (this.webSearchSupported) {
           Button('联网搜索')
@@ -37,6 +51,7 @@ export struct ChatComposer {
             .fontSize(13)
             .fontColor(this.webSearchEnabled ? Color.White : THEME_TOKENS.secondaryText)
             .backgroundColor(this.webSearchEnabled ? this.appearanceAccentColor : THEME_TOKENS.surface)
+            .systemMaterial(this.immersiveMaterial())
             .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.84 });
         }
       }.width('100%');
@@ -44,7 +59,7 @@ export struct ChatComposer {
        TextInput({ placeholder: '输入消息', text: this.inputText }).layoutWeight(1).height(44).onChange((value: string): void => { this.inputText = value; });
       if (this.isGenerating) {
         Button() { Image($r('app.media.chat_close')).width(20).height(20).fillColor(this.appearanceAccentColor); }
-          .onClick(this.onStop).width(44).height(44).backgroundColor(THEME_TOKENS.surface).borderRadius(22).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
+          .onClick(this.onStop).width(44).height(44).backgroundColor(THEME_TOKENS.surface).borderRadius(22).systemMaterial(this.immersiveMaterial()).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.82 });
       } else {
         Button() { Image($r('app.media.chat_send')).width(21).height(21).fillColor(this.appearanceAccentColor); }
           .onClick((): void => { const value: string = this.inputText.trim(); if (value.length > 0 || this.hasAttachment) { this.onSend(value); this.inputText = ''; } })

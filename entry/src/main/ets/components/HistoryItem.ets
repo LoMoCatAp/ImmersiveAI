@@ -1,5 +1,6 @@
 import { ConversationRecord, MessageStatus } from '../model/ChatModels';
 import { THEME_TOKENS } from '../common/ThemeTokens';
+import { uiMaterial } from '@kit.ArkUI';
 
 @Component
 export struct HistoryItem {
@@ -9,6 +10,16 @@ export struct HistoryItem {
   onOpen: () => void = (): void => {};
   onExport: () => void = (): void => {};
   onDelete: () => void = (): void => {};
+
+  private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
+    return new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.THIN,
+      materialColor: `${this.appearanceAccentColor}1C`,
+      applyShadow: false,
+      interactive: true,
+      lightEffect: { color: this.appearanceAccentColor }
+    });
+  }
 
   private timeLabel(): string {
     const date: Date = new Date(this.item.updatedAt);
@@ -49,6 +60,7 @@ export struct HistoryItem {
         .width(40)
         .height(40)
         .backgroundColor(Color.Transparent)
+        .systemMaterial(this.immersiveMaterial())
         .bindMenu([
           { value: '导出 Markdown', action: (): void => { this.onExport(); } },
           { value: '删除会话', action: (): void => { this.onDelete(); } }
@@ -59,6 +71,7 @@ export struct HistoryItem {
       .padding({ left: 14, right: 8, top: 12, bottom: 12 })
       .backgroundColor(this.selected ? $r('app.color.selection_surface') : Color.Transparent)
       .borderRadius(12)
+      .systemMaterial(this.immersiveMaterial())
       .onClick(this.onOpen)
       .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.98 });
   }

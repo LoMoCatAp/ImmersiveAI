@@ -15,6 +15,7 @@ import { MarkdownBlock, MarkdownParser } from '../service/MarkdownParser';
 import { MarkdownBlockView } from '../components/MarkdownBlockView';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { promptAction } from '@kit.ArkUI';
+import { uiMaterial } from '@kit.ArkUI';
 import { fileIo as fs, fileUri, picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
@@ -64,6 +65,16 @@ export struct ChatView {
   @StorageLink('chat_rendered_assistant_content') private renderedAssistantContent: string = '{}';
   @StorageLink('chat_rendered_assistant_reasoning') private renderedAssistantReasoning: string = '{}';
   private messageScroller: Scroller = new Scroller();
+
+  private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
+    return new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.REGULAR,
+      materialColor: `${this.appearanceAccentColor}1C`,
+      applyShadow: true,
+      interactive: true,
+      lightEffect: { color: this.appearanceAccentColor }
+    });
+  }
 
   aboutToAppear(): void {
     AppStore.chatViewModel.setStateObserver((): void => {
@@ -227,6 +238,7 @@ export struct ChatView {
           .padding({ left: 10, right: 10, top: 8, bottom: 8 })
           .backgroundColor(THEME_TOKENS.surface)
           .borderRadius(12)
+          .systemMaterial(this.immersiveMaterial())
           .onClick((): void => this.openSearchSource(source.url))
           .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 });
         }, (source: WebSearchResult, index: number): string => `${index}-${source.url}`);
@@ -537,7 +549,7 @@ export struct ChatView {
       Row({ space: 8 }) { Image($r('app.media.menu_assistant')).width(18).height(18).fillColor(this.appearanceAccentColor); Text('助手名称').fontSize(14).fontColor(THEME_TOKENS.secondaryText); }.width('100%');
       TextInput({ placeholder: '助手', text: this.assistantName }).onChange((value: string): void => { this.assistantName = value; });
       Button('保存').onClick((): void => { this.saveMoreSettings(); }).height(THEME_TOKENS.touchTarget).width('100%').clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.88 });
-    }.padding(20).width('100%').backgroundColor(THEME_TOKENS.surface);
+    }.padding(20).width('100%').backgroundColor(THEME_TOKENS.surface).systemMaterial(this.immersiveMaterial());
   }
 
   build() {

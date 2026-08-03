@@ -4,6 +4,7 @@ import { WebSearchConfiguration, WebSearchProvider, WebSearchResponse, WebSearch
 import { KnowledgeSource } from '../model/CapabilityModels';
 import { fileIo as fs, fileUri, picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
+import { uiMaterial } from '@kit.ArkUI';
 
 interface SkillOption { name: string; prompt: string; }
 
@@ -62,6 +63,16 @@ export struct CapabilityCenterView {
   @StorageLink('appearance_accent_color') private appearanceAccentColor: string = '#3559D8';
   private contentScroller: Scroller = new Scroller();
   private readonly webSearchService: WebSearchService = new WebSearchService();
+
+  private immersiveMaterial(): uiMaterial.ImmersiveMaterial {
+    return new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.REGULAR,
+      materialColor: `${this.appearanceAccentColor}1C`,
+      applyShadow: true,
+      interactive: true,
+      lightEffect: { color: this.appearanceAccentColor }
+    });
+  }
 
   aboutToAppear(): void {
     this.systemPrompt = AppStore.readAppearance('capability_system_prompt', '');
@@ -352,7 +363,7 @@ export struct CapabilityCenterView {
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showMcpSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showMcpSettings, this.mcpSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showMcpSettings = false; } });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
+      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).systemMaterial(this.immersiveMaterial());
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('联网搜索').fontSize(17).fontWeight(FontWeight.Medium); Text('可选择服务商原生、本地或 API 搜索服务。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
@@ -361,7 +372,7 @@ export struct CapabilityCenterView {
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showSearchSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showSearchSettings, this.searchSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showSearchSettings = false; } });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
+      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).systemMaterial(this.immersiveMaterial());
       Column({ space: 8 }) {
         Row({ space: 8 }) {
           Column({ space: 3 }) { Text('图像生成').fontSize(17).fontWeight(FontWeight.Medium); Text('保存兼容 OpenAI Images API 的服务配置；生成、保存与预览将在后续版本接入。').fontSize(13).fontColor(THEME_TOKENS.secondaryText); }.alignItems(HorizontalAlign.Start).layoutWeight(1);
@@ -370,7 +381,7 @@ export struct CapabilityCenterView {
             .width(36).height(36).backgroundColor(Color.Transparent).onClick((): void => { this.showImageSettings = true; }).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.9 })
             .bindSheet($$this.showImageSettings, this.imageSettingsSheet(), { detents: [SheetSize.FIT_CONTENT], preferType: SheetType.BOTTOM, showClose: true, dragBar: true, onWillDismiss: (): void => { this.showImageSettings = false; } });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius);
+      }.alignItems(HorizontalAlign.Start).width('100%').padding(16).backgroundColor(THEME_TOKENS.surface).borderRadius(THEME_TOKENS.cardRadius).systemMaterial(this.immersiveMaterial());
     }.width('100%');
   }
 
@@ -383,7 +394,7 @@ export struct CapabilityCenterView {
       TextInput({ placeholder: 'https://example.com/mcp', text: this.mcpEndpoint }).onChange((value: string): void => { this.mcpEndpoint = value; }).width('100%');
       TextInput({ placeholder: '超时秒数', text: this.mcpTimeout }).type(InputType.Number).onChange((value: string): void => { this.mcpTimeout = value; }).width('100%');
       Button('保存 MCP 配置').onClick((): void => { this.save('capability_mcp_endpoint', this.mcpEndpoint); this.save('capability_mcp_timeout', this.mcpTimeout); this.showMcpSettings = false; }).width('100%').height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
-    }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 });
+    }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 }).systemMaterial(this.immersiveMaterial());
   }
 
   @Builder
@@ -399,7 +410,7 @@ export struct CapabilityCenterView {
           Button('保存搜索配置').onClick((): void => { void this.saveSearchSettings(); this.showSearchSettings = false; }).layoutWeight(1).height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
           Button(this.testingSearch ? '正在测试' : '测试搜索').onClick((): void => { if (!this.testingSearch) void this.testSearchSettings(); }).enabled(!this.testingSearch).height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
         }.width('100%');
-      }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 });
+      }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 }).systemMaterial(this.immersiveMaterial());
     }.width('100%').height(430).scrollBar(BarState.Auto).edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true });
   }
 
@@ -412,7 +423,7 @@ export struct CapabilityCenterView {
       TextInput({ placeholder: '图像模型名称', text: this.imageModel }).onChange((value: string): void => { this.imageModel = value; }).width('100%');
       Select(IMAGE_SIZE_OPTIONS.map((value: string): SelectOption => ({ value: value }))).selected(this.imageSizeIndex).value(IMAGE_SIZE_OPTIONS[this.imageSizeIndex]).onSelect((index: number): void => { this.imageSizeIndex = index; }).width('100%');
       Button('保存图像生成配置').onClick((): void => { this.save('capability_image_endpoint', this.imageEndpoint); this.save('capability_image_model', this.imageModel); this.save('capability_image_size', `${this.imageSizeIndex}`); this.showImageSettings = false; }).width('100%').height(44).clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.92 });
-    }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 });
+    }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 20, right: 20, top: 28, bottom: 24 }).systemMaterial(this.immersiveMaterial());
   }
 
   @Builder
